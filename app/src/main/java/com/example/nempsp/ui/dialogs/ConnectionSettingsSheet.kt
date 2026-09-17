@@ -1,5 +1,11 @@
 package com.example.nempsp.ui.dialogs
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -363,6 +369,30 @@ private fun BluetoothSettingsTab(
     val connectedDeviceName by connectionManager.btClient.connectedDeviceName.collectAsState()
     val btStatus by connectionManager.btClient.status.collectAsState()
 
+    val btPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = {
+            connectionManager.btClient.refreshPairedDevices()
+        }
+    )
+
+    fun requestBtAndRefresh() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val needed = mutableListOf<String>()
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                needed.add(Manifest.permission.BLUETOOTH_CONNECT)
+            }
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                needed.add(Manifest.permission.BLUETOOTH_SCAN)
+            }
+            if (needed.isNotEmpty()) {
+                btPermissionLauncher.launch(needed.toTypedArray())
+                return
+            }
+        }
+        connectionManager.btClient.refreshPairedDevices()
+    }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -387,7 +417,7 @@ private fun BluetoothSettingsTab(
             }
 
             Button(
-                onClick = { connectionManager.btClient.refreshPairedDevices() },
+                onClick = { requestBtAndRefresh() },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E2638))
             ) {
                 Icon(Icons.Default.Refresh, null, tint = Color(0xFF80D8FF), modifier = Modifier.size(16.dp))

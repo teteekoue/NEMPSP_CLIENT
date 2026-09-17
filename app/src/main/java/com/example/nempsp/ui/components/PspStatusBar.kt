@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Computer
+import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -55,6 +56,7 @@ fun PspStatusBar(
     onOpenCustomizer: () -> Unit,
     onOpenLogs: () -> Unit,
     onOpenServerGuide: () -> Unit,
+    onSwitchMode: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val statusColor = when {
@@ -223,6 +225,21 @@ fun PspStatusBar(
                     imageVector = Icons.Default.Tune,
                     contentDescription = "Redesigner manette",
                     tint = Color(0xFFFFB74D),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            // Switch to Server Mode button
+            IconButton(
+                onClick = onSwitchMode,
+                modifier = Modifier
+                    .size(32.dp)
+                    .testTag("btn_switch_app_mode")
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Dns,
+                    contentDescription = "Changer de rôle (Serveur/Manette)",
+                    tint = Color(0xFF00E676),
                     modifier = Modifier.size(18.dp)
                 )
             }

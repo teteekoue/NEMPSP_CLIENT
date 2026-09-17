@@ -60,6 +60,7 @@ fun PspControllerScreen(
     layoutConfig: LayoutConfig,
     onSaveConfig: (LayoutConfig) -> Unit,
     onResetConfig: () -> LayoutConfig,
+    onSwitchToModeSelection: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val currentState by connectionManager.currentState.collectAsState()
@@ -119,7 +120,8 @@ fun PspControllerScreen(
                 onOpenConnectionSheet = { showConnectionSheet = true },
                 onOpenCustomizer = { showLayoutEditor = true },
                 onOpenLogs = { showLogsDialog = true },
-                onOpenServerGuide = { showServerGuide = true }
+                onOpenServerGuide = { showServerGuide = true },
+                onSwitchMode = onSwitchToModeSelection
             )
 
             // Main Play Surface

@@ -1,11 +1,15 @@
-# 🎮 NEMPSP - Architecture Client / Serveur & Guide de Création de l'APK Serveur
+# 🎮 NEMPSP - Manette & Serveur 2-en-1 pour PPSSPP (Chromebook, PC & Android)
 
-> Guide technique complet pour comprendre l'écosystème **NEMPSP**, son protocole binaire temps réel, et concevoir l'application **APK Serveur Android** compagnon capable de recevoir les touches et d'émuler une vraie manette PSP pour **PPSSPP** (Chromebook, Android TV, PC & smartphones).
+> L'application intègre désormais **les deux rôles dans le même APK** :
+> 1. **Mode Manette (Client)** : Transforme votre smartphone en manette PSP tactile avec haptique réaliste et touches redimensionnables.
+> 2. **Mode Récepteur (Serveur)** : Tourne sur votre Chromebook, PC ou tablette pour écouter les touches en WiFi (UDP), USB ADB (TCP) et Bluetooth, puis les afficher en direct et les transmettre à PPSSPP.
+>
+> Au démarrage, une fenêtre élégante vous propose de choisir le rôle de l'appareil (avec option de mémorisation modifiable à tout instant).
 
 ---
 
 ## 📑 Sommaire
-1. [Vue d'ensemble de l'écosystème NEMPSP](#1-vue-densemble-de-lécosystème-nempsp)
+1. [Vue d'ensemble de l'écosystème NEMPSP (Application 2-en-1)](#1-vue-densemble-de-lécosystème-nempsp)
 2. [Spécification Complète du Protocole Binaire (9 Octets)](#2-spécification-complète-du-protocole-binaire-9-octets)
 3. [Modes de Communication Pris en Charge](#3-modes-de-communication-pris-en-charge)
 4. [Architecture & Conception de l'APK Serveur](#4-architecture--conception-de-lapk-serveur)
