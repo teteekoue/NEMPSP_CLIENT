@@ -1,0 +1,6 @@
+{
+  "name": "NEMPSP",
+  "description": "Application manette PSP haute performance pour jouer sur Chromebook (WiFi, Bluetooth, USB)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
