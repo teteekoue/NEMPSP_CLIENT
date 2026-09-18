@@ -1,0 +1,122 @@
+name: Build Universal Android APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Universal APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: Prepare environment files & placeholder secrets
+        run: |
+          # Create placeholder .env if not present
+          if [ ! -f .env ]; then
+            touch .env
+          fi
+          
+          # Create empty placeholder google-services.json if needed
+          if [ ! -f app/google-services.json ]; then
+            cat << 'EOF' > app/google-services.json
+          {
+            "project_info": {
+              "project_number": "1234567890",
+              "project_id": "nempsp-app"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:1234567890:android:nempsp",
+                  "android_client_info": {
+                    "package_name": "com.aistudio.nempsp.gpad"
+                  }
+                }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
+          fi
+
+      - name: Ensure Gradle wrapper executable exists
+        run: |
+          if [ ! -f gradlew ]; then
+            gradle wrapper --gradle-version 9.3.1
+          fi
+          chmod +x gradlew
+
+      - name: Build Universal Debug APK
+        run: ./gradlew assembleDebug --stacktrace --no-daemon
+
+      - name: Locate & Rename Universal APK
+        id: prepare_apk
+        run: |
+          APK_PATH=$(find app/build/outputs/apk -type f -name "*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "Error: No APK found after build!"
+            exit 1
+          fi
+          
+          OUTPUT_DIR="build-artifacts"
+          mkdir -p "$OUTPUT_DIR"
+          
+          FINAL_APK_NAME="NEMPSP-universal-v1.0.apk"
+          cp "$APK_PATH" "$OUTPUT_DIR/$FINAL_APK_NAME"
+          
+          echo "apk_path=$OUTPUT_DIR/$FINAL_APK_NAME" >> $GITHUB_OUTPUT
+          echo "apk_name=$FINAL_APK_NAME" >> $GITHUB_OUTPUT
+          echo "APK successfully prepared: $OUTPUT_DIR/$FINAL_APK_NAME"
+
+      - name: Upload APK as Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prepare_apk.outputs.apk_name }}
+          path: ${{ steps.prepare_apk.outputs.apk_path }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub Release (on tag or main push)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.prepare_apk.outputs.apk_path }}
+          name: NEMPSP Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
