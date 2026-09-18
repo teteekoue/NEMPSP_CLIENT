@@ -9,6 +9,20 @@ plugins {
   alias(libs.plugins.google.services)
 }
 
+// ---------------------------------------------------------------------------
+// CI : rend les erreurs du compilateur Kotlin lisibles dans la pull request.
+//
+// Les journaux de run GitHub Actions ne sont pas toujours téléchargeables
+// (stockage blob inaccessible selon l'environnement). On déclare donc un
+// « problem matcher » : le runner transforme chaque ligne `e: fichier:ligne:col: message`
+// en annotation attachée au fichier, consultable via l'API des check-runs.
+// Sans aucun effet en dehors de GitHub Actions.
+// ---------------------------------------------------------------------------
+if (System.getenv("GITHUB_ACTIONS") == "true") {
+  val matcherPath = rootProject.projectDir.resolve("ci/kotlin-problem-matcher.json").absolutePath
+  println("::add-matcher::$matcherPath")
+}
+
 android {
   namespace = "com.example"
   compileSdk { version = release(36) { minorApiLevel = 1 } }

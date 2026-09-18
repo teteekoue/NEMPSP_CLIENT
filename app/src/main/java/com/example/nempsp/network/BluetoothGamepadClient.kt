@@ -83,7 +83,6 @@ class BluetoothGamepadClient(
         get() = bluetoothAdapter != null
 
     val isBluetoothEnabled: Boolean
-        @SuppressLint("MissingPermission")
         get() = runCatching { bluetoothAdapter?.isEnabled == true }.getOrDefault(false)
 
     @SuppressLint("MissingPermission")

@@ -1,0 +1,54 @@
+{
+  "problemMatcher": [
+    {
+      "owner": "kotlin-compiler-error",
+      "severity": "error",
+      "pattern": [
+        {
+          "regexp": "^e: file://(.+?):(\\d+):(\\d+):\\s*(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        }
+      ]
+    },
+    {
+      "owner": "kotlin-compiler-error-legacy",
+      "severity": "error",
+      "pattern": [
+        {
+          "regexp": "^e:\\s+(.+?):\\s+\\((\\d+),\\s*(\\d+)\\):\\s*(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        }
+      ]
+    },
+    {
+      "owner": "gradle-what-went-wrong",
+      "severity": "error",
+      "pattern": [
+        {
+          "regexp": "^\\* What went wrong:$"
+        },
+        {
+          "regexp": "^(.+)$",
+          "message": 1,
+          "loop": true
+        }
+      ]
+    },
+    {
+      "owner": "gradle-task-failed",
+      "severity": "error",
+      "pattern": [
+        {
+          "regexp": "^> Task (:\\S+) FAILED$",
+          "message": 1
+        }
+      ]
+    }
+  ]
+}
