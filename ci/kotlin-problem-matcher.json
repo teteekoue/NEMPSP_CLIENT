@@ -5,7 +5,7 @@
       "severity": "error",
       "pattern": [
         {
-          "regexp": "^e: file://(.+?):(\\d+):(\\d+):\\s*(.*)$",
+          "regexp": "^.*?e: (?:file://)?([^:]*\\.kt):(\\d+):(\\d+):?\\s*(.*)$",
           "file": 1,
           "line": 2,
           "column": 3,
@@ -14,15 +14,32 @@
       ]
     },
     {
-      "owner": "kotlin-compiler-error-legacy",
+      "owner": "kotlin-diagnostic-line",
       "severity": "error",
       "pattern": [
         {
-          "regexp": "^e:\\s+(.+?):\\s+\\((\\d+),\\s*(\\d+)\\):\\s*(.*)$",
-          "file": 1,
-          "line": 2,
-          "column": 3,
-          "message": 4
+          "regexp": "^(e: .*)$",
+          "message": 1
+        }
+      ]
+    },
+    {
+      "owner": "kotlin-source-line",
+      "severity": "error",
+      "pattern": [
+        {
+          "regexp": "^(.*[^A-Za-z][A-Za-z0-9_]+\\.kt.*)$",
+          "message": 1
+        }
+      ]
+    },
+    {
+      "owner": "java-error-line",
+      "severity": "error",
+      "pattern": [
+        {
+          "regexp": "^(.*\\berror: .*)$",
+          "message": 1
         }
       ]
     },

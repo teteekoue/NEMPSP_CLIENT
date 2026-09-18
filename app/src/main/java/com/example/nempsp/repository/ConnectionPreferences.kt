@@ -42,9 +42,9 @@ class ConnectionPreferences(context: Context) {
     var bluetoothAddress: String?
         get() = prefs.getString("bluetooth_address", null)
         set(value) {
-            prefs.edit().apply {
-                if (value == null) remove("bluetooth_address") else putString("bluetooth_address", value)
-            }.apply()
+            val editor = prefs.edit()
+            if (value == null) editor.remove("bluetooth_address") else editor.putString("bluetooth_address", value)
+            editor.apply()
         }
 
     var connectionMode: ConnectionMode
