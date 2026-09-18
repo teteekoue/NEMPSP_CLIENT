@@ -29,14 +29,14 @@ Au lancement de l'application, une fenêtre vous demande de choisir le rôle de 
 
 ```
              ┌──────────────────────────────────────────────┐
-             │            Sélectionnez votre Rôle           │
+             │            Sélectionnez votre Rôle                   │
              ├──────────────────────┬───────────────────────┤
-             │  📱 Mode Manette    │  💻 Mode Récepteur    │
-             │     (Client)         │     (Serveur)         │
-             │                      │                       │
-             │ Votre smartphone     │ Votre Chromebook, PC  │
-             │ devient la manette   │ ou tablette reçoit    │
-             │ tactile de jeu.      │ les commandes en jeu. │
+             │  📱 Mode Manette         │  💻 Mode Récepteur        │
+             │     (Client)             │     (Serveur)             │
+             │                          │                           │
+             │ Votre smartphone         │ Votre Chromebook, PC      │
+             │ devient la manette       │ ou tablette reçoit        │
+             │ tactile de jeu.          │ les commandes en jeu.     │
              └──────────────────────┴───────────────────────┘
 ```
 
