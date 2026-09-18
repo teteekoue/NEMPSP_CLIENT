@@ -5,14 +5,19 @@ import com.example.nempsp.model.PspButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 
+/**
+ * Façade du récepteur utilisée par l'interface.
+ *
+ * Le port demandé est maintenant réellement transmis au service (il était auparavant ignoré).
+ */
 class NemPspServerEngine(
     private val context: Context,
-    private val scope: CoroutineScope
+    @Suppress("unused") private val scope: CoroutineScope
 ) {
     val status: StateFlow<ServerStatus> = NemPspForegroundServerService.serverState
 
-    fun startServer(port: Int = 8989) {
-        NemPspForegroundServerService.startService(context)
+    fun startServer(port: Int = NemPspForegroundServerService.DEFAULT_PORT) {
+        NemPspForegroundServerService.startService(context, port)
     }
 
     fun stopServer() {

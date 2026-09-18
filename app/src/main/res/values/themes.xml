@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.MyApplication" parent="android:Theme.DeviceDefault.NoActionBar" />
+    <!--
+      Thème sombre appliqué dès la création de la fenêtre.
+      L'ancien thème nu (DeviceDefault sans fenêtre sombre) provoquait un flash blanc/clair
+      au lancement, en contradiction avec l'interface noire de la console PSP.
+    -->
+    <style name="Theme.MyApplication" parent="android:Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowBackground">@color/nempsp_background</item>
+        <item name="android:colorBackground">@color/nempsp_background</item>
+        <item name="android:statusBarColor">@color/nempsp_background</item>
+        <item name="android:navigationBarColor">@color/nempsp_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
 </resources>

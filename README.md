@@ -101,7 +101,7 @@ Idéale pour jouer sans aucun câble si les deux appareils sont connectés à la
 1. **Sur le Chromebook (Récepteur)** :
    - Lancez NEMPSP et sélectionnez **Mode Récepteur**.
    - Notez l'adresse IP affichée à l'écran (exemple : `192.168.1.45`).
-   - Vérifiez que le statut indique « Serveur en écoute sur le port 54545 ».
+   - Vérifiez que le statut indique « Écoute UDP 0.0.0.0:8989 ACTIVE » (port 8989 par défaut).
 
 2. **Sur le Smartphone (Manette)** :
    - Lancez NEMPSP et sélectionnez **Mode Manette**.

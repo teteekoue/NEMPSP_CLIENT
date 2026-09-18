@@ -33,8 +33,10 @@ private val LightColorScheme =
 @Composable
 fun MyApplicationTheme(
   darkTheme: Boolean = isSystemInDarkTheme(),
-  // Dynamic color is available on Android 12+
-  dynamicColor: Boolean = true,
+  // Dynamic Color (Material You) est désactivé : NEMPSP impose une charte « console PSP »
+  // sombre et néon. Activé, il repeignait boutons, curseurs et champs avec les couleurs du
+  // fond d'écran de l'appareil, ce qui cassait complètement l'identité visuelle.
+  dynamicColor: Boolean = false,
   content: @Composable () -> Unit,
 ) {
   val colorScheme =
