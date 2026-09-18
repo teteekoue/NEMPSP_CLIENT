@@ -47,24 +47,21 @@ jobs:
           GOOGLE_SERVICES_JSON_B64: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
         run: |
           # 1. Create .env if not present
-          if [ ! -f .env ]; then
-            touch .env
-          fi
+          [ -f .env ] || touch .env
 
           mkdir -p app
 
-          # 2. Check if a real google-services.json is provided via Secret
+          # 2. If a real google-services.json is provided via Secret, decode it
           if [ -n "${GOOGLE_SERVICES_JSON_B64:-}" ]; then
             echo "Decoding GOOGLE_SERVICES_JSON_B64 secret to app/google-services.json..."
             printf '%s' "$GOOGLE_SERVICES_JSON_B64" | base64 --decode > app/google-services.json
             echo "Secret successfully decoded."
           fi
 
-          # 3. If no google-services.json exists, disable the Google Services task
-          # so processDebugGoogleServices never fails or halts the universal APK compilation
-          if [ ! -f app/google-services.json ]; then
-            echo "No google-services.json provided. Configuring Gradle to skip Google Services processing..."
-            echo "tasks.matching { it.name.startsWith('process') && it.name.contains('GoogleServices') }.configureEach { enabled = false }" >> app/build.gradle.kts
+          # 3. Ensure debug.keystore exists for signing debug builds in clean CI environments
+          if [ ! -f debug.keystore ]; then
+            echo "Generating fallback debug keystore for CI..."
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
 
       - name: Ensure Gradle wrapper executable exists
