@@ -1,11 +1,11 @@
 package com.example.nempsp.ui.components
 
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -53,34 +53,76 @@ fun PspDPad(
     val isLeft = activeButtons.contains(PspButton.LEFT)
     val isRight = activeButtons.contains(PspButton.RIGHT)
 
-    var currentTouch by remember { mutableStateOf<Offset?>(null) }
+    // Track currently pressed buttons inside this gesture session
+    var currentPressedUp by remember { mutableStateOf(false) }
+    var currentPressedDown by remember { mutableStateOf(false) }
+    var currentPressedLeft by remember { mutableStateOf(false) }
+    var currentPressedRight by remember { mutableStateOf(false) }
 
-    fun updateDirectionFromOffset(offset: Offset, sizePx: Float) {
+    fun updateDirection(offset: Offset, sizePx: Float) {
         val center = sizePx / 2f
         val dx = offset.x - center
         val dy = offset.y - center
         val dist = sqrt(dx * dx + dy * dy)
         val deadzone = sizePx * 0.12f
 
-        if (dist < deadzone) {
-            if (isUp) onButtonChange(PspButton.UP, false).also { onFeedback(true) }
-            if (isDown) onButtonChange(PspButton.DOWN, false).also { onFeedback(true) }
-            if (isLeft) onButtonChange(PspButton.LEFT, false).also { onFeedback(true) }
-            if (isRight) onButtonChange(PspButton.RIGHT, false).also { onFeedback(true) }
-            return
+        var targetUp = false
+        var targetDown = false
+        var targetLeft = false
+        var targetRight = false
+
+        if (dist >= deadzone) {
+            val angle = Math.toDegrees(atan2(dy.toDouble(), dx.toDouble())).let { if (it < 0) it + 360 else it }
+
+            targetRight = angle in 337.5..360.0 || angle in 0.0..22.5 || angle in 22.5..67.5 || angle in 292.5..337.5
+            targetDown = angle in 22.5..157.5
+            targetLeft = angle in 112.5..247.5
+            targetUp = angle in 202.5..337.5
         }
 
-        val angle = Math.toDegrees(atan2(dy.toDouble(), dx.toDouble())).let { if (it < 0) it + 360 else it }
+        if (targetUp != currentPressedUp) {
+            currentPressedUp = targetUp
+            onButtonChange(PspButton.UP, targetUp)
+            onFeedback(!targetUp)
+        }
+        if (targetDown != currentPressedDown) {
+            currentPressedDown = targetDown
+            onButtonChange(PspButton.DOWN, targetDown)
+            onFeedback(!targetDown)
+        }
+        if (targetLeft != currentPressedLeft) {
+            currentPressedLeft = targetLeft
+            onButtonChange(PspButton.LEFT, targetLeft)
+            onFeedback(!targetLeft)
+        }
+        if (targetRight != currentPressedRight) {
+            currentPressedRight = targetRight
+            onButtonChange(PspButton.RIGHT, targetRight)
+            onFeedback(!targetRight)
+        }
+    }
 
-        val newRight = angle in 337.5..360.0 || angle in 0.0..22.5 || angle in 22.5..67.5 || angle in 292.5..337.5
-        val newDown = angle in 22.5..157.5
-        val newLeft = angle in 112.5..247.5
-        val newUp = angle in 202.5..337.5
-
-        if (newUp != isUp) onButtonChange(PspButton.UP, newUp).also { onFeedback(!newUp) }
-        if (newDown != isDown) onButtonChange(PspButton.DOWN, newDown).also { onFeedback(!newDown) }
-        if (newLeft != isLeft) onButtonChange(PspButton.LEFT, newLeft).also { onFeedback(!newLeft) }
-        if (newRight != isRight) onButtonChange(PspButton.RIGHT, newRight).also { onFeedback(!newRight) }
+    fun releaseAll() {
+        if (currentPressedUp) {
+            currentPressedUp = false
+            onButtonChange(PspButton.UP, false)
+            onFeedback(true)
+        }
+        if (currentPressedDown) {
+            currentPressedDown = false
+            onButtonChange(PspButton.DOWN, false)
+            onFeedback(true)
+        }
+        if (currentPressedLeft) {
+            currentPressedLeft = false
+            onButtonChange(PspButton.LEFT, false)
+            onFeedback(true)
+        }
+        if (currentPressedRight) {
+            currentPressedRight = false
+            onButtonChange(PspButton.RIGHT, false)
+            onFeedback(true)
+        }
     }
 
     Box(
@@ -88,45 +130,24 @@ fun PspDPad(
             .size(baseSize)
             .testTag("psp_dpad")
             .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = { offset ->
-                        currentTouch = offset
-                        updateDirectionFromOffset(offset, size.width.toFloat())
-                        tryAwaitRelease()
-                        currentTouch = null
-                        if (isUp) onButtonChange(PspButton.UP, false).also { onFeedback(true) }
-                        if (isDown) onButtonChange(PspButton.DOWN, false).also { onFeedback(true) }
-                        if (isLeft) onButtonChange(PspButton.LEFT, false).also { onFeedback(true) }
-                        if (isRight) onButtonChange(PspButton.RIGHT, false).also { onFeedback(true) }
-                    }
-                )
-            }
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { offset ->
-                        currentTouch = offset
-                        updateDirectionFromOffset(offset, size.width.toFloat())
-                    },
-                    onDrag = { change, _ ->
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    down.consume()
+                    updateDirection(down.position, size.width.toFloat())
+
+                    var pointerId = down.id
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val change = event.changes.firstOrNull { it.id == pointerId }
+                        if (change == null || !change.pressed) {
+                            // Touch released or pointer lifted
+                            break
+                        }
                         change.consume()
-                        currentTouch = change.position
-                        updateDirectionFromOffset(change.position, size.width.toFloat())
-                    },
-                    onDragEnd = {
-                        currentTouch = null
-                        if (isUp) onButtonChange(PspButton.UP, false).also { onFeedback(true) }
-                        if (isDown) onButtonChange(PspButton.DOWN, false).also { onFeedback(true) }
-                        if (isLeft) onButtonChange(PspButton.LEFT, false).also { onFeedback(true) }
-                        if (isRight) onButtonChange(PspButton.RIGHT, false).also { onFeedback(true) }
-                    },
-                    onDragCancel = {
-                        currentTouch = null
-                        if (isUp) onButtonChange(PspButton.UP, false).also { onFeedback(true) }
-                        if (isDown) onButtonChange(PspButton.DOWN, false).also { onFeedback(true) }
-                        if (isLeft) onButtonChange(PspButton.LEFT, false).also { onFeedback(true) }
-                        if (isRight) onButtonChange(PspButton.RIGHT, false).also { onFeedback(true) }
+                        updateDirection(change.position, size.width.toFloat())
                     }
-                )
+                    releaseAll()
+                }
             },
         contentAlignment = Alignment.Center
     ) {

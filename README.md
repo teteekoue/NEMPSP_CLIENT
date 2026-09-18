@@ -1,560 +1,192 @@
-# 🎮 NEMPSP - Manette & Serveur 2-en-1 pour PPSSPP (Chromebook, PC & Android)
+# 🎮 NEMPSP - Guide Utilisateur Complet
 
-> L'application intègre désormais **les deux rôles dans le même APK** :
-> 1. **Mode Manette (Client)** : Transforme votre smartphone en manette PSP tactile avec haptique réaliste et touches redimensionnables.
-> 2. **Mode Récepteur (Serveur)** : Tourne sur votre Chromebook, PC ou tablette pour écouter les touches en WiFi (UDP), USB ADB (TCP) et Bluetooth, puis les afficher en direct et les transmettre à PPSSPP.
->
-> Au démarrage, une fenêtre élégante vous propose de choisir le rôle de l'appareil (avec option de mémorisation modifiable à tout instant).
+Bienvenue dans le guide d'utilisation de **NEMPSP**, l'application tout-en-un qui connecte votre smartphone comme manette de jeu dédiée à votre émulateur **PPSSPP** (sur Chromebook, PC, tablette ou autre appareil Android).
+
+Ce document explique en détail le fonctionnement de l'application, la gestion de ses deux modes complémentaires, ainsi que la configuration pas-à-pas pour jouer dans les meilleures conditions.
 
 ---
 
-## 📑 Sommaire
-1. [Vue d'ensemble de l'écosystème NEMPSP (Application 2-en-1)](#1-vue-densemble-de-lécosystème-nempsp)
-2. [Spécification Complète du Protocole Binaire (9 Octets)](#2-spécification-complète-du-protocole-binaire-9-octets)
-3. [Modes de Communication Pris en Charge](#3-modes-de-communication-pris-en-charge)
-4. [Architecture & Conception de l'APK Serveur](#4-architecture--conception-de-lapk-serveur)
-5. [Méthodes d'Injection des Touches dans PPSSPP](#5-méthodes-dinjection-des-touches-dans-ppsspp)
-6. [Code Source Clé en Main pour l'APK Serveur (Kotlin)](#6-code-source-clé-en-main-pour-lapk-serveur-kotlin)
-7. [Configuration de PPSSPP pour la Reconnaissance des Touches](#7-configuration-de-ppsspp-pour-la-reconnaissance-des-touches)
-8. [Guide de Dépannage & Optimisation de la Latence](#8-guide-de-dépannage--optimisation-de-la-latence)
+## 📌 Qu'est-ce que NEMPSP ?
+
+**NEMPSP** résout un problème classique du jeu sur émulateur PSP : le confort des commandes.
+
+Jouer sur un grand écran (comme un Chromebook ou une tablette) avec les touches virtuelles à l'écran masque la zone de jeu et manque d'ergonomie. Brancher une manette physique n'est pas toujours possible ou pratique en déplacement.
+
+**NEMPSP transforme votre smartphone Android en une véritable manette PSP tactile haute précision**, tout en fournissant sur l'appareil de jeu un **récepteur autonome** capable de capter vos actions et de les transmettre au jeu en temps réel.
+
+### Les points forts :
+- **Application 2-en-1** : un seul fichier APK à installer sur vos deux appareils.
+- **Zéro latence ressentie** : transmission ultra-rapide optimisée (WiFi, câble USB ou Bluetooth).
+- **Disposition PSP fidèle** : croix directionnelle (D-Pad), touches d'action emblématiques (△, ○, ✕, □), stick analogique fluide, gâchettes d'épaule (L et R) et barre système (SELECT, START, HOME).
+- **Personnalisation complète** : taille des touches, espacements, opacité et retours vibratoires ajustables selon vos mains.
+- **Fonctionnement en arrière-plan** : le mode récepteur continue de fonctionner pendant que vous jouez en plein écran dans PPSSPP.
 
 ---
 
-## 1. Vue d'ensemble de l'écosystème NEMPSP
+## 🔄 Les Deux Modes de l'Application
+
+Au lancement de l'application, une fenêtre vous demande de choisir le rôle de l'appareil :
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│              SMARTPHONE (CLIENT NEMPSP)                 │
-│  - Interface tactile PSP (D-Pad, △○✕□, L/R, Analog)     │
-│  - Redimensionnement libre (50% - 180%)                 │
-│  - Haptique & animations physiques au toucher           │
-│  - Émetteur UDP (WiFi) / TCP (USB) / RFCOMM (Bluetooth) │
-└────────────────────────────┬────────────────────────────┘
-                             │  Paquets binaires 60-120 Hz
-                             │  (9 octets par trame)
-                             ▼
-┌─────────────────────────────────────────────────────────┐
-│            CHROMEBOOK / APPAREIL CIBLE                  │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │               APK SERVEUR NEMPSP                  │  │
-│  │  - Serveur UDP / TCP / Bluetooth RFCOMM           │  │
-│  │  - Décodeur de paquets & vérification Checksum    │  │
-│  │  - Injecteur d'événements (HID Gamepad / UInput)  │  │
-│  └─────────────────────────┬─────────────────────────┘  │
-│                            │ Événements Manette Virtuelle│
-│                            ▼                            │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │           ÉMULATEUR PSP (ex: PPSSPP)              │  │
-│  │  - Mappé directement sur manette virtuelle        │  │
-│  │  - Latence ultra-basse (< 2-5 ms)                 │  │
-│  └───────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
+             ┌──────────────────────────────────────────────┐
+             │            Sélectionnez votre Rôle           │
+             ├──────────────────────┬───────────────────────┤
+             │  📱 Mode Manette    │  💻 Mode Récepteur    │
+             │     (Client)         │     (Serveur)         │
+             │                      │                       │
+             │ Votre smartphone     │ Votre Chromebook, PC  │
+             │ devient la manette   │ ou tablette reçoit    │
+             │ tactile de jeu.      │ les commandes en jeu. │
+             └──────────────────────┴───────────────────────┘
 ```
 
-L'application **NEMPSP Client** transforme votre smartphone Android en une manette PSP haut de gamme avec retour haptique réaliste, redimensionnement dynamique des touches, et latence ultra-faible.
-
-Pour contrôler un émulateur PSP (**PPSSPP**) tournant sur Chromebook, tablette ou Android TV, une entité **Serveur** doit recevoir ces paquets et les convertir en entrées joystick/clavier reconnues par le système.
+> 💡 **Astuce** : Vous pouvez cocher l'option *« Se souvenir de ce choix »* pour ouvrir directement votre mode préféré. Pour changer de rôle par la suite, appuyez simplement sur le bouton **Changer de rôle** dans la barre supérieure.
 
 ---
 
-## 2. Spécification Complète du Protocole Binaire (9 Octets)
+## 📱 1. Le Mode Manette (Client)
 
-Pour garantir une latence minimale (< 2 ms) et éviter le surcoût de sérialisation JSON en pleine partie, le client transmet un paquet binaire compact de **9 octets** à une cadence de **60 Hz** (toutes les 16 ms) ou sur événement tactile direct.
+Ce mode s'utilise sur votre **smartphone**.
 
-### Structure du paquet binaire (`toBinaryPacket`) :
+### Description de l'interface
+L'écran affiche l'agencement authentique d'une console portable PSP :
+1. **À gauche** :
+   - **Gâchette L** en haut à gauche.
+   - **Croix directionnelle (D-Pad)** à réponse immédiate (supporte les 4 directions et les diagonales).
+   - **Stick analogique circulaire** avec zone morte configurable et recentrage automatique élastique.
+2. **Au centre** :
+   - **Moniteur d'état** indiquant le mode de connexion, la latence et les paquets envoyés par seconde.
+   - **Barre système PSP** en bas : touches *HOME*, *VOL -*, *VOL +*, *SELECT* et *START*.
+3. **À droite** :
+   - **Gâchette R** en haut à droite.
+   - **Boutons d'action géométriques** : Triangle (vert), Rond (rouge), Croix (bleu), Carré (rose).
 
-| Offset | Champ | Type | Description |
-| :--- | :--- | :--- | :--- |
-| `[0]` | **Magic Byte 1** | `0x4E` ('N') | Marqueur fixe d'identification du protocole |
-| `[1]` | **Magic Byte 2** | `0x4D` ('M') | Marqueur fixe d'identification du protocole |
-| `[2..3]` | **Sequence Number** | `UInt16` (LE) | Compteur incrémenté (0 à 65535) pour ordonnancer les paquets |
-| `[4..5]` | **Buttons Mask** | `UInt16` (LE) | Masque binaire des 16 touches de la PSP (1 = pressé, 0 = relâché) |
-| `[6]` | **Analog X** | `UInt8` (0..255) | Axe horizontal : `0` = gauche max, `128` = centre, `255` = droite max |
-| `[7]` | **Analog Y** | `UInt8` (0..255) | Axe vertical : `0` = haut max, `128` = centre, `255` = bas max |
-| `[8]` | **XOR Checksum** | `UInt8` | Checksum XOR de contrôle d'intégrité sur les octets `0` à `7` |
-
-### Masque des Touches (`Buttons Mask`) :
-
-Le masque binaire 16 bits encode l'état exact des boutons :
-
-```kotlin
-val UP       = 1 shl 0   // 0x0001 (Croix Haut)
-val RIGHT    = 1 shl 1   // 0x0002 (Croix Droite)
-val DOWN     = 1 shl 2   // 0x0004 (Croix Bas)
-val LEFT     = 1 shl 3   // 0x0008 (Croix Gauche)
-
-val TRIANGLE = 1 shl 4   // 0x0010 (Touche Triangle △)
-val CIRCLE   = 1 shl 5   // 0x0020 (Touche Rond ○)
-val CROSS    = 1 shl 6   // 0x0040 (Touche Croix ✕)
-val SQUARE   = 1 shl 7   // 0x0080 (Touche Carré □)
-
-val L        = 1 shl 8   // 0x0100 (Gâchette d'épaule Gauche L)
-val R        = 1 shl 9   // 0x0200 (Gâchette d'épaule Droite R)
-
-val SELECT   = 1 shl 10  // 0x0400 (Touche SELECT)
-val START    = 1 shl 11  // 0x0800 (Touche START)
-val HOME     = 1 shl 12  // 0x1000 (Touche PS / HOME)
-val VOL_DOWN = 1 shl 13  // 0x2000 (Volume Moins)
-val VOL_UP   = 1 shl 14  // 0x4000 (Volume Plus)
-val NOTE     = 1 shl 15  // 0x8000 (Touche Musique ♪)
-```
-
-### Formule du Checksum XOR :
-```kotlin
-var checksum: Byte = 0
-for (i in 0 until 8) {
-    checksum = (checksum.toInt() xor packet[i].toInt()).toByte()
-}
-// packet[8] doit être égal à checksum
-```
+### Barre d'outils supérieure
+En haut de l'écran, vous trouverez les raccourcis d'accès rapide :
+- **Statut de connexion** (Pastille verte = Connecté, Orange = En attente, Rouge = Déconnecté).
+- **Icône Paramètres de connexion** : pour choisir entre WiFi, USB et Bluetooth, régler l'adresse IP et tester la liaison.
+- **Icône Personnalisation (Manette)** : pour redimensionner les touches, déplacer les blocs et modifier la vibration.
+- **Icône Journal en direct** : pour visualiser chaque appui de touche et vérifier que tout répond.
+- **Icône Guide** : conseils rapides intégrés.
+- **Icône Rôle** : pour revenir au choix des modes.
 
 ---
 
-## 3. Modes de Communication Pris en Charge
+## 💻 2. Le Mode Récepteur (Serveur)
 
-L'APK Serveur doit écouter sur trois canaux selon la méthode de connexion choisie par le joueur :
+Ce mode s'utilise sur l'appareil où tourne votre jeu (**Chromebook, PC, TV ou tablette**).
 
-### A. Mode WiFi Local (UDP) - Port par défaut : `8989`
-- **Auto-Discovery Broadcast** :
-  - Le client envoie sur l'adresse de broadcast `255.255.255.255:8989` le message ASCII : `NEMPSP_DISCOVERY_REQUEST`.
-  - Le serveur doit répondre immédiatement à l'expéditeur : `NEMPSP_SERVER:CHROMEBOOK_ACTIVE`.
-- **Flux de données** : Paquets UDP directs de 9 octets.
+### Description de l'interface
+L'écran serveur affiche un tableau de bord complet :
+- **État du service** : indique si le récepteur est actif et en écoute.
+- **Informations réseau** : affiche l'adresse IP locale de votre Chromebook pour la saisir facilement sur la manette.
+- **Manette virtuelle de contrôle** : reproduit visuellement et en direct chaque bouton pressé sur le smartphone pour tester la réception avant de lancer le jeu.
+- **Journal d'activité** : liste les paquets reçus, le mode actif (WiFi/USB/Bluetooth) et les temps de réponse.
 
-### B. Mode Filaire USB (Tunnel ADB Reverse) - Port `8989`
-- Le client se connecte en TCP standard vers `127.0.0.1:8989`.
-- Sur le Chromebook / PC, la redirection de port est configurée via :
-  ```bash
-  adb reverse tcp:8989 tcp:8989
-  ```
-- **Flux de données** : Flux TCP streamé (paquets de 9 octets continus).
-
-### C. Mode Bluetooth (RFCOMM / SPP)
-- **UUID Service SPP standard** :
-  `00001101-0000-1000-8000-00805F9B34FB`
-- **Nom du service** : `"NEMPSP_GAMEPAD_SERVER"`
-- Le serveur écoute via `BluetoothAdapter.listenUsingRfcommWithServiceRecord(...)`.
+### Fonctionnement en arrière-plan
+Dès que vous activez le serveur, une notification persistante garantit qu'Android ne ferme pas l'application lorsque vous basculez sur PPSSPP. Vous pouvez mettre NEMPSP en arrière-plan et lancer votre partie en plein écran sans coupure.
 
 ---
 
-## 4. Architecture & Conception de l'APK Serveur
+## 🚀 Guide de Connexion Pas-à-Pas
 
-Pour créer une application **NEMPSP Server (APK)** propre et autonome, voici les composants requis :
-
-```
-nempsp-server/
-├── app/
-│   ├── src/main/
-│   │   ├── AndroidManifest.xml
-│   │   └── java/com/example/nempspserver/
-│   │       ├── MainActivity.kt               (Interface d'état & configuration)
-│   │       ├── service/
-│   │       │   └── NemPspServerService.kt    (Foreground Service réseau & input)
-│   │       ├── network/
-│   │       │   ├── UdpGamepadServer.kt       (Écouteur UDP 8989 + Discovery)
-│   │       │   ├── TcpGamepadServer.kt       (Écouteur TCP ADB 8989)
-│   │       │   └── BluetoothSppServer.kt     (Écouteur RFCOMM Bluetooth)
-│   │       ├── parser/
-│   │       │   └── PacketParser.kt           (Décodage binaire 9 octets)
-│   │       └── input/
-│   │           ├── GamepadInputInjector.kt   (Interface commune d'injection)
-│   │           ├── UinputGamepadInjector.kt  (Via /dev/uinput ou Root/Rootless)
-│   │           └── AccessibilityInjector.kt  (Via AccessibilityService)
-```
-
-### Permissions à déclarer dans `AndroidManifest.xml` :
-```xml
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <!-- Réseau WiFi et Local -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
-
-    <!-- Bluetooth SPP / RFCOMM -->
-    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
-
-    <!-- Service d'arrière-plan pour continuer à recevoir pendant que PPSSPP tourne -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-
-    <application
-        android:label="NEMPSP Server"
-        android:icon="@mipmap/ic_launcher"
-        android:theme="@style/Theme.Material3.Dark">
-        
-        <service
-            android:name=".service.NemPspServerService"
-            android:foregroundServiceType="connectedDevice"
-            android:exported="false" />
-
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
-</manifest>
-```
+NEMPSP propose **trois manières** de relier vos deux appareils. Choisissez celle qui correspond à votre installation :
 
 ---
 
-## 5. Méthodes d'Injection des Touches dans PPSSPP
+### Option A : Connexion sans fil via WiFi (La plus simple)
 
-Pour que PPSSPP réagisse aux commandes reçues depuis le serveur Android, il existe 3 approches techniques :
+Idéale pour jouer sans aucun câble si les deux appareils sont connectés à la même box Internet ou au même réseau WiFi :
 
-### Option 1 : Périphérique Manette Virtuelle `/dev/uinput` (La plus performante ⚡)
-- Sur Linux/Chromebook (conteneur Crostini ou Android avec permissions uinput) :
-- Crée un véritable périphérique HID Gamepad dans le noyau Linux.
-- **Avantage** : Reconnue nativement par PPSSPP comme une manette Xbox/PlayStation physique sans aucun mapping complexe.
-- **Axes** : `ABS_X`, `ABS_Y` (stick analogique).
-- **Boutons** : `BTN_A` (Cross), `BTN_B` (Circle), `BTN_X` (Square), `BTN_Y` (Triangle), `BTN_TL` (L), `BTN_TR` (R), `BTN_START`, `BTN_SELECT`.
+1. **Sur le Chromebook (Récepteur)** :
+   - Lancez NEMPSP et sélectionnez **Mode Récepteur**.
+   - Notez l'adresse IP affichée à l'écran (exemple : `192.168.1.45`).
+   - Vérifiez que le statut indique « Serveur en écoute sur le port 54545 ».
 
-### Option 2 : Android `AccessibilityService` ou `INJECT_EVENTS`
-- Injecte directement les `KeyEvent` Android (`KEYCODE_BUTTON_A`, `KEYCODE_DPAD_UP`, etc.).
-- Idéal si l'APK Serveur et PPSSPP tournent sur le même système Android/Chromebook.
+2. **Sur le Smartphone (Manette)** :
+   - Lancez NEMPSP et sélectionnez **Mode Manette**.
+   - Appuyez sur l'icône **Connexion** (antenne en haut).
+   - Sélectionnez l'onglet **WiFi (UDP)**.
+   - Entrez l'adresse IP notée sur le Chromebook.
+   - Cliquez sur **Connecter**.
 
-### Option 3 : Bluetooth HID Device Profile (`BluetoothHidDevice`)
-- Disponible depuis Android 9 (API 28+).
-- L'APK Serveur se déclare comme une vraie manette Bluetooth standard auprès du Chromebook ou du PC hôte !
-
----
-
-## 6. Code Source Clé en Main pour l'APK Serveur (Kotlin)
-
-### A. Décodeur du Protocole (`PacketParser.kt`)
-```kotlin
-package com.example.nempspserver.parser
-
-data class DecodedState(
-    val sequence: Int,
-    val mask: Int,
-    val analogX: Float, // -1.0f à +1.0f
-    val analogY: Float, // -1.0f à +1.0f
-    val activeButtons: List<String>
-)
-
-object PacketParser {
-    private val BUTTON_LABELS = arrayOf(
-        "UP", "RIGHT", "DOWN", "LEFT",
-        "TRIANGLE", "CIRCLE", "CROSS", "SQUARE",
-        "L", "R", "SELECT", "START",
-        "HOME", "VOL-", "VOL+", "NOTE"
-    )
-
-    fun parse(packet: ByteArray): DecodedState? {
-        if (packet.size < 9) return null
-        
-        // Vérification Magic 'N' 'M'
-        if (packet[0] != 0x4E.toByte() || packet[1] != 0x4D.toByte()) {
-            return null
-        }
-
-        // Vérification Checksum XOR
-        var calcChecksum: Byte = 0
-        for (i in 0 until 8) {
-            calcChecksum = (calcChecksum.toInt() xor packet[i].toInt()).toByte()
-        }
-        if (calcChecksum != packet[8]) {
-            return null // Paquet corrompu ignoré
-        }
-
-        // Lecture Little Endian
-        val seq = (packet[2].toInt() and 0xFF) or ((packet[3].toInt() and 0xFF) shl 8)
-        val mask = (packet[4].toInt() and 0xFF) or ((packet[5].toInt() and 0xFF) shl 8)
-
-        // Conversion Analogique (128 = centre)
-        val rawX = packet[6].toInt() and 0xFF
-        val rawY = packet[7].toInt() and 0xFF
-        val ax = (rawX - 128) / 127.0f
-        val ay = (rawY - 128) / 127.0f
-
-        val pressedButtons = mutableListOf<String>()
-        for (i in 0 until 16) {
-            if ((mask and (1 shl i)) != 0) {
-                pressedButtons.add(BUTTON_LABELS[i])
-            }
-        }
-
-        return DecodedState(
-            sequence = seq,
-            mask = mask,
-            analogX = ax.coerceIn(-1f, 1f),
-            analogY = ay.coerceIn(-1f, 1f),
-            activeButtons = pressedButtons
-        )
-    }
-}
-```
-
-### B. Serveur Réseau UDP & Broadcast Discovery (`UdpGamepadServer.kt`)
-```kotlin
-package com.example.nempspserver.network
-
-import com.example.nempspserver.parser.DecodedState
-import com.example.nempspserver.parser.PacketParser
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
-import java.net.DatagramPacket
-import java.net.DatagramSocket
-import java.net.InetSocketAddress
-
-class UdpGamepadServer(
-    private val port: Int = 8989,
-    private val onStateReceived: (DecodedState) -> Unit
-) {
-    private var socket: DatagramSocket? = null
-    private var isRunning = false
-
-    suspend fun start() = withContext(Dispatchers.IO) {
-        try {
-            socket = DatagramSocket(null).apply {
-                reuseAddress = true
-                bind(InetSocketAddress("0.0.0.0", port))
-            }
-            isRunning = true
-            val buffer = ByteArray(512)
-
-            while (isRunning && isActive) {
-                val packet = DatagramPacket(buffer, buffer.size)
-                socket?.receive(packet)
-
-                val data = packet.data.copyOf(packet.length)
-
-                // 1. Réponse à la découverte automatique Broadcast
-                val message = String(data, Charsets.US_ASCII)
-                if (message.startsWith("NEMPSP_DISCOVERY_REQUEST")) {
-                    val reply = "NEMPSP_SERVER:CHROMEBOOK_ACTIVE".toByteArray(Charsets.US_ASCII)
-                    val replyPacket = DatagramPacket(reply, reply.size, packet.address, packet.port)
-                    socket?.send(replyPacket)
-                    continue
-                }
-
-                // 2. Décodage du paquet de jeu 9 octets
-                PacketParser.parse(data)?.let { state ->
-                    onStateReceived(state)
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            stop()
-        }
-    }
-
-    fun stop() {
-        isRunning = false
-        socket?.close()
-        socket = null
-    }
-}
-```
-
-### C. Serveur Bluetooth RFCOMM SPP (`BluetoothSppServer.kt`)
-```kotlin
-package com.example.nempspserver.network
-
-import android.annotation.SuppressLint
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothServerSocket
-import android.bluetooth.BluetoothSocket
-import com.example.nempspserver.parser.DecodedState
-import com.example.nempspserver.parser.PacketParser
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
-import java.io.InputStream
-import java.util.UUID
-
-class BluetoothSppServer(
-    private val bluetoothAdapter: BluetoothAdapter,
-    private val onStateReceived: (DecodedState) -> Unit
-) {
-    companion object {
-        val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-        const val SERVICE_NAME = "NEMPSP_GAMEPAD_SERVER"
-    }
-
-    private var serverSocket: BluetoothServerSocket? = null
-    private var isRunning = false
-
-    @SuppressLint("MissingPermission")
-    suspend fun start() = withContext(Dispatchers.IO) {
-        try {
-            serverSocket = bluetoothAdapter.listenUsingRfcommWithServiceRecord(SERVICE_NAME, SPP_UUID)
-            isRunning = true
-
-            while (isRunning && isActive) {
-                val clientSocket: BluetoothSocket = serverSocket?.accept() ?: break
-                handleClient(clientSocket)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            stop()
-        }
-    }
-
-    private fun handleClient(socket: BluetoothSocket) {
-        val input: InputStream = socket.inputStream
-        val buffer = ByteArray(64)
-        val packetAcc = ByteArray(9)
-        var accIndex = 0
-
-        try {
-            while (isRunning) {
-                val read = input.read(buffer)
-                if (read <= 0) break
-
-                for (i in 0 until read) {
-                    val b = buffer[i]
-                    if (accIndex == 0 && b != 0x4E.toByte()) continue
-                    if (accIndex == 1 && b != 0x4D.toByte()) {
-                        accIndex = 0
-                        continue
-                    }
-                    packetAcc[accIndex++] = b
-                    if (accIndex == 9) {
-                        PacketParser.parse(packetAcc)?.let { state ->
-                            onStateReceived(state)
-                        }
-                        accIndex = 0
-                    }
-                }
-            }
-        } catch (_: Exception) {
-        } finally {
-            socket.close()
-        }
-    }
-
-    fun stop() {
-        isRunning = false
-        serverSocket?.close()
-        serverSocket = null
-    }
-}
-```
-
-### D. Foreground Service Principal (`NemPspServerService.kt`)
-```kotlin
-package com.example.nempspserver.service
-
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.Service
-import android.bluetooth.BluetoothManager
-import android.content.Context
-import android.content.Intent
-import android.os.Build
-import android.os.IBinder
-import androidx.core.app.NotificationCompat
-import com.example.nempspserver.network.BluetoothSppServer
-import com.example.nempspserver.network.UdpGamepadServer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-
-class NemPspServerService : Service() {
-
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private var udpServer: UdpGamepadServer? = null
-    private var btServer: BluetoothSppServer? = null
-
-    override fun onCreate() {
-        super.onCreate()
-        startForeground(1, createNotification())
-        startNetworkListeners()
-    }
-
-    private fun startNetworkListeners() {
-        // 1. Démarrer le serveur UDP (WiFi & Découverte)
-        udpServer = UdpGamepadServer(port = 8989) { state ->
-            // Transmettre l'état au contrôleur de jeu virtuel
-            GamepadDispatcher.dispatch(state)
-        }
-        scope.launch { udpServer?.start() }
-
-        // 2. Démarrer le serveur Bluetooth RFCOMM si disponible
-        val btManager = getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
-        val btAdapter = btManager?.adapter
-        if (btAdapter != null && btAdapter.isEnabled) {
-            btServer = BluetoothSppServer(btAdapter) { state ->
-                GamepadDispatcher.dispatch(state)
-            }
-            scope.launch { btServer?.start() }
-        }
-    }
-
-    private fun createNotification(): Notification {
-        val channelId = "nempsp_server_channel"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "NEMPSP Serveur Actif", NotificationManager.IMPORTANCE_LOW)
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
-        }
-        return NotificationCompat.Builder(this, channelId)
-            .setContentTitle("NEMPSP Serveur Manette")
-            .setContentText("Écoute active sur le port 8989 (WiFi / USB / Bluetooth)")
-            .setSmallIcon(android.R.drawable.ic_menu_compass)
-            .setOngoing(true)
-            .build()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        udpServer?.stop()
-        btServer?.stop()
-        scope.cancel()
-    }
-
-    override fun onBind(intent: Intent?): IBinder? = null
-}
-```
+3. **Vérification** :
+   - Appuyez sur les boutons de votre smartphone : les touches correspondantes s'illuminent instantanément sur l'écran du Chromebook.
 
 ---
 
-## 7. Configuration de PPSSPP pour la Reconnaissance des Touches
+### Option B : Connexion filaire par câble USB (Latence la plus faible)
 
-Une fois l'APK Serveur lancé, suivez cette procédure simple dans **PPSSPP** pour mapper les touches :
+Idéale pour les jeux d'action ou de combat exigeant une réactivité absolue :
 
-1. **Ouvrez PPSSPP** sur le Chromebook / PC / Android TV.
-2. Allez dans **Paramètres** (`Settings`) > **Commandes** (`Controls`).
-3. Cliquez sur **Affecter les commandes** (`Control Mapping`).
-4. Pour chaque touche PSP affichée à l'écran :
-   - Cliquez sur le bouton `+` en face de la commande (ex: `Cross / ✕`).
-   - Appuyez sur la touche correspondante sur votre smartphone dans **NEMPSP Client**.
-   - PPSSPP détecte instantanément l'entrée et l'assigne au bouton !
-5. Répétez pour :
-   - `△ (Triangle)`, `○ (Rond)`, `✕ (Croix)`, `□ (Carré)`
-   - `Haut`, `Bas`, `Gauche`, `Droite` (D-Pad)
-   - `L` et `R` (Gâchettes)
-   - `Start` et `Select`
-   - `Stick Analogique` (inclinez le stick dans la direction demandée)
+1. Reliez votre smartphone au Chromebook avec un câble USB (activez le débogage USB dans les options pour développeurs de votre téléphone).
+2. Dans les paramètres de connexion de NEMPSP sur le smartphone, choisissez l'onglet **Câble USB (ADB)**.
+3. La connexion s'établit localement via le port USB à une vitesse maximale sans dépendre de la qualité du WiFi.
 
 ---
 
-## 8. Guide de Dépannage & Optimisation de la Latence
+### Option C : Connexion sans fil via Bluetooth
 
-| Problème rencontré | Cause probable | Solution recommandée |
-| :--- | :--- | :--- |
-| **"Non connecté / Recherche..." en WiFi** | Isolation AP sur la box WiFi ou Pare-feu actif | Assurez-vous que les deux appareils sont sur le même réseau WiFi (2.4 GHz ou 5 GHz). Désactivez "l'isolation des clients WiFi" sur le routeur, ou utilisez l'IP manuelle affichée par le serveur. |
-| **Latence perçue en WiFi (> 25 ms)** | Interférences WiFi | Privilégiez la bande **5 GHz** ou passez en **Mode Filaire USB** via `adb reverse tcp:8989 tcp:8989` (latence < 1 ms). |
-| **Bluetooth non détecté** | Appareil non appairé | Appairez le smartphone et le Chromebook dans les paramètres Android/ChromeOS avant de lancer la connexion dans l'application. |
-| **Touches non reconnues dans PPSSPP** | Permission uinput ou Accessibility inactive | Vérifiez que le service du serveur est bien actif en premier plan et que les permissions requises ont été accordées dans les paramètres d'accessibilité. |
+Pratique lorsque vous êtes en déplacement sans réseau WiFi disponible :
+
+1. Activez le Bluetooth sur les deux appareils et associez-les dans les paramètres Bluetooth de vos systèmes.
+2. Ouvrez NEMPSP sur le smartphone, ouvrez les paramètres de connexion et sélectionnez l'onglet **Bluetooth**.
+3. Choisissez votre Chromebook dans la liste des périphériques associés et cliquez sur **Connexion**.
 
 ---
 
-## 📄 Licence
-Ce projet fait partie intégrante de la suite **NEMPSP Pro Controller**. Développé avec Jetpack Compose, Material 3, Coroutines Kotlin et sockets réseau haute performance.
+## 🎮 Configuration dans l'Émulateur PPSSPP
+
+Une fois que les deux appareils communiquent, voici comment assigner vos commandes dans PPSSPP :
+
+1. Lancez **PPSSPP** sur votre Chromebook ou appareil de jeu.
+2. Allez dans **Paramètres** > **Commandes** > **Assignation des commandes**.
+3. Pour chaque commande PSP (Croix, Rond, Carré, Triangle, Haut, Bas, Gâchettes...) :
+   - Cliquez sur le bouton à assigner dans PPSSPP.
+   - Appuyez sur la touche correspondante sur votre smartphone.
+   - L'émulateur enregistre l'action immédiatement.
+4. Lancez votre jeu PSP favori et profitez d'une prise en main authentique !
+
+---
+
+## 🎨 Personnalisation Ergonomique de la Manette
+
+Chaque joueur a des mains de taille différente. NEMPSP intègre un outil complet d'ajustement :
+
+1. Dans le **Mode Manette**, appuyez sur l'icône **Personnalisation** (icône de manette).
+2. Vous pouvez régler :
+   - **Taille de la croix directionnelle** (de 60% à 160%).
+   - **Taille des boutons d'action** (de 60% à 160%).
+   - **Taille du stick analogique** et sensibilité de la zone morte.
+   - **Taille des gâchettes L et R**.
+   - **Opacité globale** (pour rendre les touches plus ou moins visibles).
+   - **Intensité du retour vibratoire (haptique)** : Léger, Moyen, Fort ou Désactivé.
+   - **Effets sonores** discrets au clic.
+3. Cliquez sur **Enregistrer** pour conserver vos réglages en mémoire permanente.
+
+---
+
+## 🛡️ Autorisations Requises & Confidentialité
+
+L'application demande uniquement les autorisations indispensables à son fonctionnement technique :
+- **Réseau et WiFi** : pour envoyer et recevoir les paquets de commandes entre les deux appareils.
+- **Bluetooth** : pour rechercher et communiquer avec votre appareil de jeu sans passer par Internet.
+- **Vibration** : pour restituer la sensation physique d'un clic mécanique sous vos doigts.
+- **Service d'arrière-plan & Notifications** : pour maintenir le récepteur actif lorsque vous jouez en plein écran dans PPSSPP.
+
+*NEMPSP ne collecte aucune donnée personnelle, ne contient aucune publicité et fonctionne entièrement en local.*
+
+---
+
+## ❓ Foire Aux Questions (FAQ)
+
+#### Les boutons restent-ils cliqués si je glisse mon doigt ?
+Non. Le gestionnaire de gestes tactiles de NEMPSP libère automatiquement et instantanément toute touche dès que le contact avec l'écran s'interrompt, évitant tout blocage de commande en pleine partie.
+
+#### Que faire si la manette ne se connecte pas en WiFi ?
+1. Vérifiez que votre smartphone et votre Chromebook sont connectés exactement à la même box ou au même point d'accès WiFi.
+2. Assurez-vous que l'adresse IP saisie dans l'application manette correspond bien à celle affichée sur l'écran récepteur du Chromebook.
+3. Utilisez le bouton **Mode Test / Simulation** dans la barre supérieure pour vérifier que vos touches réagissent bien localement.
+
+#### Puis-je changer le rôle d'un appareil enregistré par défaut ?
+Oui. À tout moment, appuyez sur l'icône de permutation de rôle située dans la barre supérieure pour ouvrir le menu et basculer instantanément d'un mode à l'autre.
