@@ -30,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -532,7 +533,9 @@ class NemPspForegroundServerService : Service() {
     }
 
     private suspend fun runStatsLoop() {
-        while (isActive && _serverState.value.isRunning) {
+        // Une `suspend fun` simple n'a pas de CoroutineScope implicite : `isActive` doit être
+        // lu dans le contexte de la coroutine courante.
+        while (currentCoroutineContext().isActive && _serverState.value.isRunning) {
             delay(1000)
             val pps = ppsCounter.getAndSet(0)
             _serverState.update { it.copy(packetsPerSecond = pps) }
@@ -558,10 +561,10 @@ class NemPspForegroundServerService : Service() {
         try {
             val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
             if (wifiManager != null) {
+                @Suppress("DEPRECATION")
                 val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     WifiManager.WIFI_MODE_FULL_LOW_LATENCY
                 } else {
-                    @Suppress("DEPRECATION")
                     WifiManager.WIFI_MODE_FULL_HIGH_PERF
                 }
                 wifiLock = wifiManager.createWifiLock(mode, "nempsp:server-wifi").apply {

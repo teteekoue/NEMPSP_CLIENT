@@ -68,16 +68,21 @@ fun PspAnalogStick(
     /**
      * Convertit la position absolue du doigt dans le puits en déflection −1..+1 (zone morte
      * recalée, sensibilité appliquée) et aligne le pouce sur cette position bornée.
+     *
+     * **Non-suspend** : `awaitEachGesture` s'exécute dans une coroutine à portée restreinte
+     * (`AwaitPointerEventScope`), qui interdit d'appeler des fonctions suspendues hors de ce
+     * scope — `Animatable.snapTo` en fait partie. On repasse donc par `coroutineScope.launch`,
+     * exactement comme pour le retour au centre.
      */
-    suspend fun applyPosition(pointerX: Float, pointerY: Float, wellRadiusPx: Float, maxRadius: Float) {
+    fun applyPosition(pointerX: Float, pointerY: Float, wellRadiusPx: Float, maxRadius: Float) {
         val dx = pointerX - wellRadiusPx
         val dy = pointerY - wellRadiusPx
         val distance = sqrt(dx * dx + dy * dy)
         val clamped = distance.coerceAtMost(maxRadius)
         val angle = atan2(dy, dx)
 
-        animatedOffsetX.snapTo(clamped * cos(angle))
-        animatedOffsetY.snapTo(clamped * sin(angle))
+        coroutineScope.launch { animatedOffsetX.snapTo(clamped * cos(angle)) }
+        coroutineScope.launch { animatedOffsetY.snapTo(clamped * sin(angle)) }
 
         val normalized = if (maxRadius <= 0f) 0f else clamped / maxRadius
         if (normalized < deadzone) {
