@@ -239,7 +239,7 @@ fun PspServerScreen(
                             .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ServerInfoColumn(status, Modifier.fillMaxWidth(), ::copy, copiedNote)
+                        ServerInfoColumn(status, serverEngine, Modifier.fillMaxWidth(), ::copy, copiedNote)
                         ServerMonitorColumn(status, serverEngine, Modifier.fillMaxWidth())
                     }
                 } else {
@@ -249,6 +249,7 @@ fun PspServerScreen(
                     ) {
                         ServerInfoColumn(
                             status,
+                            serverEngine,
                             Modifier
                                 .weight(0.48f)
                                 .fillMaxHeight()
@@ -298,6 +299,7 @@ private fun ServerStateBadge(status: ServerStatus) {
 @Composable
 private fun ServerInfoColumn(
     status: ServerStatus,
+    serverEngine: NemPspServerEngine,
     modifier: Modifier = Modifier,
     onCopy: (String, String) -> Unit,
     copiedNote: String? = null
@@ -451,6 +453,9 @@ private fun ServerInfoColumn(
                 Text(it, color = Color(0xFF00E676), fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
         }
+
+        // ---------------- Injection dans PPSSPP ----------------
+        InjectionPanel(serverEngine = serverEngine, modifier = Modifier.fillMaxWidth())
     }
 }
 

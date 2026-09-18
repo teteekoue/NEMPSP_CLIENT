@@ -22,6 +22,7 @@ import com.example.MainActivity
 import com.example.R
 import com.example.nempsp.model.ConnectionMode
 import com.example.nempsp.model.PspButton
+import com.example.nempsp.injection.InjectionBus
 import com.example.nempsp.network.NemPspProtocol
 import com.example.nempsp.network.NemPspStreamFramer
 import com.example.nempsp.repository.LogRepository
@@ -157,6 +158,8 @@ class NemPspForegroundServerService : Service() {
                     packetsReceived = current.packetsReceived + 1
                 )
             }
+            // Transmis au service d'accessibilité, qui pose les appuis dans PPSSPP.
+            InjectionBus.publish(decoded)
         }
     }
 
@@ -261,6 +264,9 @@ class NemPspForegroundServerService : Service() {
         btServerSocket = null
 
         releaseLocks()
+
+        // Plus aucune trame n'arrivera : le service d'injection doit relâcher ses doigts virtuels.
+        InjectionBus.reset()
 
         // Un arrêt demandé alors que rien ne tournait ne doit pas polluer le journal.
         if (wasRunning) {
