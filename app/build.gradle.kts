@@ -71,7 +71,14 @@ secrets {
   ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
 }
 
-googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
+googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.IGNORE }
+
+// If no real google-services.json is present, disable the task so CI builds succeed seamlessly
+if (!file("google-services.json").exists()) {
+    tasks.matching { it.name.startsWith("process") && it.name.contains("GoogleServices") }.configureEach {
+        enabled = false
+    }
+}
 
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.

@@ -42,34 +42,29 @@ jobs:
         with:
           cache-read-only: false
 
-      - name: Prepare environment files & placeholder secrets
+      - name: Prepare environment files & Google Services
+        env:
+          GOOGLE_SERVICES_JSON_B64: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
         run: |
-          # Create placeholder .env if not present
+          # 1. Create .env if not present
           if [ ! -f .env ]; then
             touch .env
           fi
-          
-          # Create empty placeholder google-services.json if needed
+
+          mkdir -p app
+
+          # 2. Check if a real google-services.json is provided via Secret
+          if [ -n "${GOOGLE_SERVICES_JSON_B64:-}" ]; then
+            echo "Decoding GOOGLE_SERVICES_JSON_B64 secret to app/google-services.json..."
+            printf '%s' "$GOOGLE_SERVICES_JSON_B64" | base64 --decode > app/google-services.json
+            echo "Secret successfully decoded."
+          fi
+
+          # 3. If no google-services.json exists, disable the Google Services task
+          # so processDebugGoogleServices never fails or halts the universal APK compilation
           if [ ! -f app/google-services.json ]; then
-            cat << 'EOF' > app/google-services.json
-          {
-            "project_info": {
-              "project_number": "1234567890",
-              "project_id": "nempsp-app"
-            },
-            "client": [
-              {
-                "client_info": {
-                  "mobilesdk_app_id": "1:1234567890:android:nempsp",
-                  "android_client_info": {
-                    "package_name": "com.aistudio.nempsp.gpad"
-                  }
-                }
-              }
-            ],
-            "configuration_version": "1"
-          }
-          EOF
+            echo "No google-services.json provided. Configuring Gradle to skip Google Services processing..."
+            echo "tasks.matching { it.name.startsWith('process') && it.name.contains('GoogleServices') }.configureEach { enabled = false }" >> app/build.gradle.kts
           fi
 
       - name: Ensure Gradle wrapper executable exists
