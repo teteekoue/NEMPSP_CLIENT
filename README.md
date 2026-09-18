@@ -1,192 +1,294 @@
-# 🎮 NEMPSP - Guide Utilisateur Complet
+# 🎮 NEMPSP — Guide Utilisateur Complet
 
-Bienvenue dans le guide d'utilisation de **NEMPSP**, l'application tout-en-un qui connecte votre smartphone comme manette de jeu dédiée à votre émulateur **PPSSPP** (sur Chromebook, PC, tablette ou autre appareil Android).
+Bienvenue dans le guide d'utilisation de **NEMPSP**, l'application tout-en-un qui transforme votre
+smartphone en manette PSP dédiée pour **PPSSPP** (sur Chromebook, tablette ou autre appareil
+Android).
 
-Ce document explique en détail le fonctionnement de l'application, la gestion de ses deux modes complémentaires, ainsi que la configuration pas-à-pas pour jouer dans les meilleures conditions.
+Un seul APK, deux rôles : **Mode Manette** sur le téléphone, **Mode Récepteur** sur l'appareil de
+jeu. Le récepteur convertit les touches reçues en **vrais appuis tactiles dans PPSSPP** : il n'y a
+**aucune configuration à faire dans l'émulateur**.
 
 ---
 
 ## 📌 Qu'est-ce que NEMPSP ?
 
-**NEMPSP** résout un problème classique du jeu sur émulateur PSP : le confort des commandes.
+Jouer sur un grand écran avec les commandes tactiles de l'émulateur masque une partie de l'image et
+manque de précision. Brancher une manette physique n'est pas toujours possible.
 
-Jouer sur un grand écran (comme un Chromebook ou une tablette) avec les touches virtuelles à l'écran masque la zone de jeu et manque d'ergonomie. Brancher une manette physique n'est pas toujours possible ou pratique en déplacement.
+**NEMPSP transforme votre smartphone en manette PSP tactile haute précision**, et fournit sur
+l'appareil de jeu un **récepteur autonome** qui capte vos actions, les affiche en direct et les
+injecte dans PPSSPP.
 
-**NEMPSP transforme votre smartphone Android en une véritable manette PSP tactile haute précision**, tout en fournissant sur l'appareil de jeu un **récepteur autonome** capable de capter vos actions et de les transmettre au jeu en temps réel.
-
-### Les points forts :
-- **Application 2-en-1** : un seul fichier APK à installer sur vos deux appareils.
-- **Zéro latence ressentie** : transmission ultra-rapide optimisée (WiFi, câble USB ou Bluetooth).
-- **Disposition PSP fidèle** : croix directionnelle (D-Pad), touches d'action emblématiques (△, ○, ✕, □), stick analogique fluide, gâchettes d'épaule (L et R) et barre système (SELECT, START, HOME).
-- **Personnalisation complète** : taille des touches, espacements, opacité et retours vibratoires ajustables selon vos mains.
-- **Fonctionnement en arrière-plan** : le mode récepteur continue de fonctionner pendant que vous jouez en plein écran dans PPSSPP.
+### Les points forts
+- **Application 2-en-1** : le même APK s'installe sur les deux appareils.
+- **Liaison vérifiée** : la manette ne déclare « Connecté » qu'après une vraie réponse du récepteur,
+  et affiche une latence **mesurée** (aller-retour), pas estimée.
+- **Trois transports** : WiFi (UDP), câble USB (adb reverse) et Bluetooth (RFCOMM/SPP).
+- **Disposition PSP fidèle** : croix directionnelle, △ ○ ✕ □, stick analogique, gâchettes L/R, barre
+  système (SELECT, START, HOME, volume).
+- **Écran adaptatif** : la manette se redimensionne seule pour tenir sur les petits écrans, et tous
+  les réglages sont regroupés dans le cadre central NEMPSP.
+- **Injection dans PPSSPP** : les touches reçues deviennent des appuis tactiles, sans réglage dans
+  l'émulateur.
+- **Fonctionnement en arrière-plan** : notification permanente, WifiLock et WakeLock — le récepteur
+  continue d'écouter pendant que PPSSPP est en plein écran.
 
 ---
 
-## 🔄 Les Deux Modes de l'Application
+## 🔄 Les deux modes
 
-Au lancement de l'application, une fenêtre vous demande de choisir le rôle de l'appareil :
+Au lancement, une fenêtre demande le rôle de l'appareil :
 
 ```
-             ┌──────────────────────────────────────────────┐
-             │            Sélectionnez votre Rôle                   │
-             ├──────────────────────┬───────────────────────┤
-             │  📱 Mode Manette         │  💻 Mode Récepteur        │
-             │     (Client)             │     (Serveur)             │
-             │                          │                           │
-             │ Votre smartphone         │ Votre Chromebook, PC      │
-             │ devient la manette       │ ou tablette reçoit        │
-             │ tactile de jeu.          │ les commandes en jeu.     │
-             └──────────────────────┴───────────────────────┘
+┌───────────────────────────────┬───────────────────────────────┐
+│  📱 Mode Manette (Client)     │  💻 Mode Récepteur (Serveur)  │
+│  Votre smartphone devient la  │  Votre Chromebook/tablette    │
+│  manette tactile de jeu.      │  reçoit les commandes et les  │
+│                               │  injecte dans PPSSPP.         │
+└───────────────────────────────┴───────────────────────────────┘
 ```
 
-> 💡 **Astuce** : Vous pouvez cocher l'option *« Se souvenir de ce choix »* pour ouvrir directement votre mode préféré. Pour changer de rôle par la suite, appuyez simplement sur le bouton **Changer de rôle** dans la barre supérieure.
+> 💡 Cochez *« Se souvenir de ce choix »* pour ouvrir directement votre mode préféré. Pour changer de
+> rôle : icône **Changer de rôle** dans le cadre central NEMPSP.
 
 ---
 
 ## 📱 1. Le Mode Manette (Client)
 
-Ce mode s'utilise sur votre **smartphone**.
+### L'écran
+1. **À gauche** : gâchette **L**, **croix directionnelle** (4 directions + diagonales), **stick
+   analogique**.
+2. **Au centre** : le **cadre NEMPSP** — logo, état de la liaison, latence, paquets/seconde,
+   diagnostic, et la **barre d'outils** (voir ci-dessous). En dessous, la barre système PSP
+   (HOME, VOL−, VOL+, SELECT, START).
+3. **À droite** : gâchette **R** et boutons d'action **△ ○ ✕ □**.
 
-### Description de l'interface
-L'écran affiche l'agencement authentique d'une console portable PSP :
-1. **À gauche** :
-   - **Gâchette L** en haut à gauche.
-   - **Croix directionnelle (D-Pad)** à réponse immédiate (supporte les 4 directions et les diagonales).
-   - **Stick analogique circulaire** avec zone morte configurable et recentrage automatique élastique.
-2. **Au centre** :
-   - **Moniteur d'état** indiquant le mode de connexion, la latence et les paquets envoyés par seconde.
-   - **Barre système PSP** en bas : touches *HOME*, *VOL -*, *VOL +*, *SELECT* et *START*.
-3. **À droite** :
-   - **Gâchette R** en haut à droite.
-   - **Boutons d'action géométriques** : Triangle (vert), Rond (rouge), Croix (bleu), Carré (rose).
+> 📐 **Petits écrans** : l'échelle de toute la manette est calculée d'après la place réellement
+> disponible (hauteur **et** largeur), les colonnes latérales s'ajustent au contenu, et la barre
+> d'outils passe sur deux lignes si le cadre est étroit. Rien ne déborde, rien n'est collé au bord de
+> l'écran.
 
-### Barre d'outils supérieure
-En haut de l'écran, vous trouverez les raccourcis d'accès rapide :
-- **Statut de connexion** (Pastille verte = Connecté, Orange = En attente, Rouge = Déconnecté).
-- **Icône Paramètres de connexion** : pour choisir entre WiFi, USB et Bluetooth, régler l'adresse IP et tester la liaison.
-- **Icône Personnalisation (Manette)** : pour redimensionner les touches, déplacer les blocs et modifier la vibration.
-- **Icône Journal en direct** : pour visualiser chaque appui de touche et vérifier que tout répond.
-- **Icône Guide** : conseils rapides intégrés.
-- **Icône Rôle** : pour revenir au choix des modes.
+### Le cadre central NEMPSP (barre d'outils)
+Tous les réglages sont **au centre**, plus sur les bords :
+
+| Icône | Rôle |
+|---|---|
+| **Connexion** (antenne) | WiFi / Bluetooth / USB, adresse IP, port, scan du réseau, diagnostic |
+| **Personnalisation** (manette) | taille des touches, espacements, opacité, vibration, son |
+| **Journal** | chaque appui, chaque paquet, chaque erreur — en direct |
+| **Guide serveur** | rappel des étapes côté récepteur |
+| **Changer de rôle** | repasser en Mode Récepteur |
+| **Mode Test** | vérifie les appuis localement, sans réseau |
+
+Le cadre affiche aussi : le mode actif, le statut (**Connecté / En attente / Déconnecté / Échec**),
+la latence réelle en ms, les paquets envoyés par seconde, et surtout un **diagnostic en clair**
+(exemple : *« Aucun récepteur n'écoute sur 192.168.1.77:8989 »*).
+
+### Le stick analogique
+Le pouce suit le doigt **dès le premier contact** (pas d'attente d'un seuil de glissement), la course
+est bornée au puits, la zone morte est recalée puis la sensibilité appliquée, et le pouce revient au
+centre avec un ressort dès que le doigt se lève (l'axe est remis à 0, jamais de touche bloquée).
 
 ---
 
 ## 💻 2. Le Mode Récepteur (Serveur)
 
-Ce mode s'utilise sur l'appareil où tourne votre jeu (**Chromebook, PC, TV ou tablette**).
+### Ce que l'écran affiche désormais (état réel, jamais inventé)
+- **Badge d'état** : `EN LIGNE · 8989` seulement si au moins un socket est **réellement ouvert** ;
+  `INCOMPLET` si le service tourne mais qu'aucune écoute n'a pu démarrer ; `ARRÊTÉ` sinon.
+- **Erreur de démarrage** en rouge : la cause exacte (port déjà utilisé, Bluetooth refusé, …).
+  C'est cette ligne qui explique un « Erreur envoi paquet UDP » côté manette.
+- **Pastilles par transport** : UDP, TCP et Bluetooth avec leur état d'écoute individuel.
+- **Toutes les adresses IPv4** de l'appareil, copiables d'un toucher, la meilleure marquée
+  *« à utiliser »*. Les adresses non joignables en WiFi (interface loopback, pont du conteneur Android
+  d'un Chromebook `arc*`/`vnic*`, réseaux cellulaires) sont écartées automatiquement.
+- **Télémétrie** : paquets reçus, fréquence, clients actifs, dernière source.
+- **Moniteur des touches** : les 16 boutons s'allument en direct ; toucher un bouton simule une
+  injection (pratique pour tester PPSSPP sans la manette).
+- **Carte « Injection dans PPSSPP »** : état du service, activation, mode analogique, calibration,
+  test et compteur de gestes injectés (voir plus bas).
 
-### Description de l'interface
-L'écran serveur affiche un tableau de bord complet :
-- **État du service** : indique si le récepteur est actif et en écoute.
-- **Informations réseau** : affiche l'adresse IP locale de votre Chromebook pour la saisir facilement sur la manette.
-- **Manette virtuelle de contrôle** : reproduit visuellement et en direct chaque bouton pressé sur le smartphone pour tester la réception avant de lancer le jeu.
-- **Journal d'activité** : liste les paquets reçus, le mode actif (WiFi/USB/Bluetooth) et les temps de réponse.
+> Sur un écran étroit, les deux colonnes s'empilent et deviennent déroulantes ; les boutons passent en
+> ligne flexible.
 
-### Fonctionnement en arrière-plan
-Dès que vous activez le serveur, une notification persistante garantit qu'Android ne ferme pas l'application lorsque vous basculez sur PPSSPP. Vous pouvez mettre NEMPSP en arrière-plan et lancer votre partie en plein écran sans coupure.
-
----
-
-## 🚀 Guide de Connexion Pas-à-Pas
-
-NEMPSP propose **trois manières** de relier vos deux appareils. Choisissez celle qui correspond à votre installation :
-
----
-
-### Option A : Connexion sans fil via WiFi (La plus simple)
-
-Idéale pour jouer sans aucun câble si les deux appareils sont connectés à la même box Internet ou au même réseau WiFi :
-
-1. **Sur le Chromebook (Récepteur)** :
-   - Lancez NEMPSP et sélectionnez **Mode Récepteur**.
-   - Notez l'adresse IP affichée à l'écran (exemple : `192.168.1.45`).
-   - Vérifiez que le statut indique « Écoute UDP 0.0.0.0:8989 ACTIVE » (port 8989 par défaut).
-
-2. **Sur le Smartphone (Manette)** :
-   - Lancez NEMPSP et sélectionnez **Mode Manette**.
-   - Appuyez sur l'icône **Connexion** (antenne en haut).
-   - Sélectionnez l'onglet **WiFi (UDP)**.
-   - Entrez l'adresse IP notée sur le Chromebook.
-   - Cliquez sur **Connecter**.
-
-3. **Vérification** :
-   - Appuyez sur les boutons de votre smartphone : les touches correspondantes s'illuminent instantanément sur l'écran du Chromebook.
+### Arrière-plan
+Dès le démarrage du récepteur, une notification permanente est publiée, un **WifiLock** (faible
+latence) et un **WakeLock** sont pris : Android ne coupe ni le WiFi ni le CPU pendant la partie.
 
 ---
 
-### Option B : Connexion filaire par câble USB (Latence la plus faible)
+## 🚀 Connexion pas-à-pas
 
-Idéale pour les jeux d'action ou de combat exigeant une réactivité absolue :
+### Option A — WiFi (la plus simple)
+1. **Récepteur** : NEMPSP → *Mode Récepteur* → **Démarrer**.
+   Vérifiez le badge `EN LIGNE · 8989` et l'absence d'erreur rouge. Notez l'IP marquée *« à utiliser »*.
+2. **Manette** : NEMPSP → *Mode Manette* → icône **Connexion** du cadre central → onglet **WiFi**.
+   Saisissez l'IP (ou touchez **Scanner le réseau** puis l'IP détectée) → **Connecter**.
+3. **Vérification** : le statut passe à *« Connecté au récepteur 192.168.1.45:8989 (aller-retour 3ms) »*
+   et les touches s'allument sur l'écran du récepteur.
 
-1. Reliez votre smartphone au Chromebook avec un câble USB (activez le débogage USB dans les options pour développeurs de votre téléphone).
-2. Dans les paramètres de connexion de NEMPSP sur le smartphone, choisissez l'onglet **Câble USB (ADB)**.
-3. La connexion s'établit localement via le port USB à une vitesse maximale sans dépendre de la qualité du WiFi.
+> La manette n'envoie **aucun** paquet tant que le récepteur n'a pas répondu à son PING : le statut
+> « Connecté » signifie donc toujours « ça marche », et un échec affiche toujours pourquoi.
 
----
+### Option B — Câble USB (latence la plus faible)
+1. Branchez le téléphone à l'appareil de jeu, activez le **débogage USB** (options développeur).
+2. Sur l'appareil de jeu, lancez la commande affichée par NEMPSP (copiable en un toucher) :
+   `adb reverse tcp:8989 tcp:8989`
+3. Dans la manette : onglet **USB** → **Connecter USB**. Le trafic passe par `127.0.0.1`.
 
-### Option C : Connexion sans fil via Bluetooth
-
-Pratique lorsque vous êtes en déplacement sans réseau WiFi disponible :
-
-1. Activez le Bluetooth sur les deux appareils et associez-les dans les paramètres Bluetooth de vos systèmes.
-2. Ouvrez NEMPSP sur le smartphone, ouvrez les paramètres de connexion et sélectionnez l'onglet **Bluetooth**.
-3. Choisissez votre Chromebook dans la liste des périphériques associés et cliquez sur **Connexion**.
-
----
-
-## 🎮 Configuration dans l'Émulateur PPSSPP
-
-Une fois que les deux appareils communiquent, voici comment assigner vos commandes dans PPSSPP :
-
-1. Lancez **PPSSPP** sur votre Chromebook ou appareil de jeu.
-2. Allez dans **Paramètres** > **Commandes** > **Assignation des commandes**.
-3. Pour chaque commande PSP (Croix, Rond, Carré, Triangle, Haut, Bas, Gâchettes...) :
-   - Cliquez sur le bouton à assigner dans PPSSPP.
-   - Appuyez sur la touche correspondante sur votre smartphone.
-   - L'émulateur enregistre l'action immédiatement.
-4. Lancez votre jeu PSP favori et profitez d'une prise en main authentique !
+### Option C — Bluetooth (sans WiFi)
+1. Associez les deux appareils dans les réglages Bluetooth Android.
+2. Récepteur : le mode Récepteur ouvre automatiquement une écoute RFCOMM « NEMPSP_GAMEPAD_SERVER ».
+3. Manette : onglet **Bluetooth** → **Actualiser** → choisissez l'appareil → **Connecter**.
 
 ---
 
-## 🎨 Personnalisation Ergonomique de la Manette
+## 🎮 Jouer dans PPSSPP : aucune configuration dans PPSSPP
 
-Chaque joueur a des mains de taille différente. NEMPSP intègre un outil complet d'ajustement :
+Android interdit à une application d'envoyer des événements clavier/manette à une **autre**
+application. La seule API publique capable de produire de vrais appuis dans PPSSPP est un
+**service d'accessibilité** : il envoie des gestes tactiles, exactement comme un doigt. PPSSPP voit
+donc ses propres commandes tactiles être touchées — d'où l'absence totale de réglage dans
+l'émulateur.
 
-1. Dans le **Mode Manette**, appuyez sur l'icône **Personnalisation** (icône de manette).
-2. Vous pouvez régler :
-   - **Taille de la croix directionnelle** (de 60% à 160%).
-   - **Taille des boutons d'action** (de 60% à 160%).
-   - **Taille du stick analogique** et sensibilité de la zone morte.
-   - **Taille des gâchettes L et R**.
-   - **Opacité globale** (pour rendre les touches plus ou moins visibles).
-   - **Intensité du retour vibratoire (haptique)** : Léger, Moyen, Fort ou Désactivé.
-   - **Effets sonores** discrets au clic.
-3. Cliquez sur **Enregistrer** pour conserver vos réglages en mémoire permanente.
+### Activation (une seule fois)
+1. Sur l'appareil de jeu, ouvrez NEMPSP → **Mode Récepteur** → **Démarrer**.
+2. Dans la carte **Injection dans PPSSPP**, touchez **Activer**.
+3. Android ouvre les réglages d'accessibilité : choisissez
+   **« NEMPSP — Manette pour PPSSPP »**, puis **Utiliser le service**.
+4. La carte passe à **ACTIVE** dès que PPSSPP est au premier plan.
+
+> 🔒 Ce service ne lit **aucun** contenu d'écran (il n'a que le droit d'envoyer des gestes). Il
+> n'injecte rien quand PPSSPP n'est pas au premier plan, et lève immédiatement tous les appuis si
+> vous quittez le jeu. Il se désactive depuis les réglages d'accessibilité ou depuis NEMPSP.
+
+### Utilisation
+1. Démarrez le récepteur, connectez la manette.
+2. Touchez **PPSSPP** (bouton orange) : NEMPSP lance l'émulateur et reste actif en arrière-plan.
+3. Jouez. La carte affiche le compteur de gestes injectés — s'il augmente, l'injection fonctionne.
+4. Bouton **Tester** : injecte un appui sur ✕ dans PPSSPP pour vérifier le ciblage.
+
+### Si un bouton ne tombe pas au bon endroit : la calibration
+Par défaut, NEMPSP vise la **disposition tactile d'usine de PPSSPP en paysage**. Si vous avez déplacé
+ou redimensionné les commandes tactiles, calibrez :
+
+1. Carte **Injection dans PPSSPP** → **Calibrer**.
+2. Un schéma 16:9 de la fenêtre de jeu s'affiche, avec les cibles actuelles.
+3. Lisez l'instruction (*« Touchez l'endroit où PPSSPP affiche ✕ CROSS »*) et touchez le schéma à cet
+   endroit. La cible suivante est proposée automatiquement.
+4. **Terminé**.
+
+Les positions sont mémorisées en **proportions de la fenêtre de jeu** : elles restent valables si la
+fenêtre PPSSPP est déplacée ou redimensionnée (cas courant sur Chromebook, où vous pouvez garder
+NEMPSP et PPSSPP côte à côte pendant la calibration). *Réinitialiser* remet une cible, *Tout
+réinitialiser* revient à la disposition d'usine.
+
+### Stick analogique et volume
+- **Mode « Croix directionnelle »** (par défaut) : la déflection du stick est convertie en appuis
+  Haut/Bas/Gauche/Droite. Aucune option à activer dans PPSSPP.
+- **Mode « Stick analogique tactile »** : un doigt virtuel reste posé sur le stick tactile de PPSSPP et
+  glisse — analogique réel. Activez alors *Touch analog stick* dans PPSSPP et calibrez son centre.
+- **VOL+ / VOL−** : réglés via le volume système de l'appareil de jeu, pas par le tactile.
+- **HOME** : sans équivalent PPSSPP, non injecté tant qu'il n'est pas calibré.
 
 ---
 
-## 🛡️ Autorisations Requises & Confidentialité
+## 🎨 Personnalisation de la manette
 
-L'application demande uniquement les autorisations indispensables à son fonctionnement technique :
-- **Réseau et WiFi** : pour envoyer et recevoir les paquets de commandes entre les deux appareils.
-- **Bluetooth** : pour rechercher et communiquer avec votre appareil de jeu sans passer par Internet.
-- **Vibration** : pour restituer la sensation physique d'un clic mécanique sous vos doigts.
-- **Service d'arrière-plan & Notifications** : pour maintenir le récepteur actif lorsque vous jouez en plein écran dans PPSSPP.
+Icône **Personnalisation** du cadre central :
+- taille de la croix directionnelle, des boutons d'action, du stick et des gâchettes (60 % à 160 %) ;
+- espacements et position des blocs ;
+- opacité globale ;
+- zone morte et sensibilité du stick ;
+- retour vibratoire (léger / moyen / fort / désactivé) et sons de clic ;
+- cadence d'envoi automatique.
 
-*NEMPSP ne collecte aucune donnée personnelle, ne contient aucune publicité et fonctionne entièrement en local.*
+**Enregistrer** conserve tout entre les sessions.
 
 ---
 
-## ❓ Foire Aux Questions (FAQ)
+## 🛡️ Autorisations et confidentialité
 
-#### Les boutons restent-ils cliqués si je glisse mon doigt ?
-Non. Le gestionnaire de gestes tactiles de NEMPSP libère automatiquement et instantanément toute touche dès que le contact avec l'écran s'interrompt, évitant tout blocage de commande en pleine partie.
+| Autorisation | Pourquoi |
+|---|---|
+| Réseau / état du WiFi / multicast | envoyer et recevoir les paquets de commandes, scanner le réseau |
+| Modification de l'état WiFi (WifiLock) | empêcher la mise en veille du WiFi pendant la partie |
+| Bluetooth (connexion, scan) | liaison RFCOMM avec l'appareil de jeu |
+| Vibration | retour haptique des appuis |
+| Service de premier plan + notifications | maintenir le récepteur actif pendant le jeu |
+| WakeLock | empêcher la mise en veille du CPU |
+| **Accessibilité** (activation manuelle) | **injecter les appuis tactiles dans PPSSPP** |
 
-#### Que faire si la manette ne se connecte pas en WiFi ?
-1. Vérifiez que votre smartphone et votre Chromebook sont connectés exactement à la même box ou au même point d'accès WiFi.
-2. Assurez-vous que l'adresse IP saisie dans l'application manette correspond bien à celle affichée sur l'écran récepteur du Chromebook.
-3. Utilisez le bouton **Mode Test / Simulation** dans la barre supérieure pour vérifier que vos touches réagissent bien localement.
+*NEMPSP ne collecte aucune donnée, ne contient aucune publicité et fonctionne entièrement en local :
+rien ne quitte votre réseau.*
 
-#### Puis-je changer le rôle d'un appareil enregistré par défaut ?
-Oui. À tout moment, appuyez sur l'icône de permutation de rôle située dans la barre supérieure pour ouvrir le menu et basculer instantanément d'un mode à l'autre.
+---
+
+## ❓ Dépannage
+
+#### « Erreur envoi paquet UDP » / la manette ne se connecte pas
+Le diagnostic affiché dans le cadre central indique la cause. Dans l'ordre :
+1. **Le récepteur tourne-t-il vraiment ?** Badge `EN LIGNE · 8989` sur l'appareil de jeu. S'il affiche
+   `INCOMPLET` ou une erreur rouge, corrigez-la d'abord (port déjà pris par une autre application,
+   Bluetooth refusé…).
+2. **Même réseau WiFi ?** Les deux appareils doivent être sur la même box / le même point d'accès.
+3. **La bonne IP ?** Utilisez l'adresse marquée *« à utiliser »* sur l'écran du récepteur (un
+   Chromebook expose plusieurs IPs, dont celle du conteneur Android, **non joignable** en WiFi).
+   Touchez-la pour la copier, ou lancez **Scanner le réseau** côté manette.
+4. **« Isolation client » / « AP isolation »** activée sur la box ou le point d'accès invité ? Elle
+   bloque les échanges entre appareils du même réseau : désactivez-la.
+5. **Pare-feu / VPN / réseau invité** sur l'appareil de jeu : le port 8989 doit être libre en UDP, TCP
+   et Bluetooth.
+6. **Mode Test** (cadre central) : vérifie que les appuis sont bien détectés localement, hors réseau.
+
+#### Les touches s'allument sur le récepteur mais rien ne se passe dans PPSSPP
+1. La carte **Injection dans PPSSPP** est-elle sur **ACTIVE** (et non *INACTIVE* ou *PRÊTE*) ? Sinon
+   touchez **Activer** et validez le service d'accessibilité.
+2. L'interrupteur **Injecter les touches** est-il activé ?
+3. Le compteur **gestes injectés** augmente-t-il quand vous appuyez ? S'il reste à 0, le service n'est
+   pas lié : réactivez-le depuis les réglages d'accessibilité.
+4. Les commandes tactiles de PPSSPP sont-elles affichées ? (*Paramètres → Commandes → Contrôles
+   tactiles à l'écran*). L'injection appuie sur ces commandes : si elles sont masquées, il n'y a rien
+   à toucher.
+5. Utilisez **Tester** : un appui sur ✕ doit être visible dans PPSSPP. Sinon, **Calibrez**.
+
+#### Un bouton agit au mauvais endroit dans PPSSPP
+Ouvrez **Calibrer** et touchez le schéma à l'endroit où PPSSPP affiche ce bouton.
+
+#### Puis-je changer le rôle par défaut d'un appareil ?
+Oui : icône **Changer de rôle** du cadre central, puis décochez/recochez *« Se souvenir de ce choix »*.
+
+---
+
+## 🔧 Protocole (pour les curieux)
+
+- **Trame manette** : 9 octets — `N`,`M`, séquence (16 bits LE), masque de boutons (16 bits LE),
+  axe X, axe Y (0…255, centre 128), somme de contrôle XOR.
+- **Trame de contrôle** : 8 octets — `N`,`P`, type, charge utile (32 bits LE), XOR.
+  Types : `HELLO`(1) / `WELCOME`(2) / `PING`(3) / `PONG`(4).
+  Le `PING` transporte l'horloge monotone de l'émetteur : le `PONG` permet de mesurer un
+  **aller-retour réel**.
+- **Handshake** : la manette envoie `HELLO` puis un `PING` toutes les 350 ms tant qu'elle n'a pas de
+  réponse (1 s une fois connectée, pour mesurer la latence en continu). Elle ne passe à `CONNECTED` —
+  et ne commence à envoyer des trames manette — qu'au premier `PONG` reçu. Sans réponse pendant 4 s
+  elle affiche l'échec avec la raison, et considère la liaison perdue après 5 s.
+- **Découverte** : broadcast UDP `NEMPSP_DISCOVER` sur le port du récepteur, qui répond
+  `NEMPSP_SERVER:…`.
+- **UDP, TCP et Bluetooth** répondent tous aux trames de contrôle, avec un découpeur de flux commun
+  (resynchronisation automatique sur les canaux orientés connexion).
+
+---
+
+## 🏗️ Construire l'APK
+
+```bash
+./gradlew assembleDebug          # APK universel debug
+```
+
+Un workflow GitHub Actions (`.github/workflows/build-apk.yml`) construit l'APK universel à chaque
+poussée et le publie comme artefact de l'exécution :
+**Actions → dernière exécution → Artifacts → `NEMPSP-universal-v1.0.apk`**.
+
+Les erreurs de compilation Kotlin sont remontées en **annotations lisibles** sur l'exécution grâce à
+un *problem matcher* (`ci/kotlin-problem-matcher.json`, enregistré par `app/build.gradle.kts`) :
+onglet **Annotations** de la tâche en échec.

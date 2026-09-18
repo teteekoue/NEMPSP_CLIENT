@@ -129,6 +129,9 @@ class ConnectionManager(
         const val DEFAULT_SEND_INTERVAL_MS: Long = 16L
         private const val MIN_SEND_INTERVAL_MS: Long = 4L
         private const val MAX_SEND_INTERVAL_MS: Long = 100L
+
+        /** Cadence de veille quand aucun transport n'est connecté (économie de batterie). */
+        private const val IDLE_POLL_MS: Long = 250L
     }
 
     fun setMode(mode: ConnectionMode) {
@@ -183,7 +186,14 @@ class ConnectionManager(
         senderJob?.cancel()
         senderJob = scope.launch(Dispatchers.IO) {
             while (isActive) {
-                withTimeoutOrNull(sendIntervalMs) { changeSignal.receive() }
+                // Hors connexion, inutile de se réveiller 60 fois par seconde : un appui réveille
+                // de toute façon la coroutine immédiatement via le canal conflaté.
+                val waitMs = if (_testModeEnabled.value || connectionStatus.value == ConnectionStatus.CONNECTED) {
+                    sendIntervalMs
+                } else {
+                    IDLE_POLL_MS
+                }
+                withTimeoutOrNull(waitMs) { changeSignal.receive() }
                 sendCurrentState()
             }
         }
