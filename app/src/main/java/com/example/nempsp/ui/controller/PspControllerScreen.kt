@@ -14,11 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,20 +28,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.nempsp.model.LayoutConfig
 import com.example.nempsp.model.PspButton
 import com.example.nempsp.network.ConnectionManager
-import com.example.nempsp.ui.components.NemPspLogoBadge
 import com.example.nempsp.ui.components.PspActionButtons
 import com.example.nempsp.ui.components.PspAnalogStick
+import com.example.nempsp.ui.components.PspConsolePanel
 import com.example.nempsp.ui.components.PspDPad
 import com.example.nempsp.ui.components.PspShoulderTrigger
-import com.example.nempsp.ui.components.PspStatusBar
 import com.example.nempsp.ui.components.PspSystemBar
 import com.example.nempsp.ui.dialogs.ConnectionSettingsSheet
 import com.example.nempsp.ui.dialogs.LayoutEditorDialog
@@ -52,6 +46,19 @@ import com.example.nempsp.ui.dialogs.ServerCompanionDialog
 import com.example.nempsp.util.HapticFeedbackHelper
 import com.example.nempsp.util.SoundFeedbackHelper
 
+/**
+ * Écran manette (mode Client).
+ *
+ * Deux corrections d'ergonomie demandées :
+ * 1. **Mise à l'échelle automatique** : la manette était bâtie sur des tailles fixes
+ *    (gâchettes 44 dp + croix 160 dp + stick 130 dp ≈ 342 dp de haut) alors qu'un petit
+ *    téléphone en paysage n'offre que ~320-360 dp. Résultat : tout débordait, les éléments se
+ *    chevauchaient et les commandes des bords devenaient inatteignables. Un facteur d'échelle
+ *    global est maintenant calculé à partir de la place réellement disponible (en tenant compte
+ *    des réglages de taille de l'utilisateur), avec un plancher pour rester jouable.
+ * 2. **Barre d'outils recentrée** : plus rien n'est collé aux bords de l'écran, tous les réglages
+ *    (connexion, personnalisation, journal, guide, rôle, test) sont dans le cadre central NEMPSP.
+ */
 @Composable
 fun PspControllerScreen(
     connectionManager: ConnectionManager,
@@ -66,6 +73,7 @@ fun PspControllerScreen(
     val currentState by connectionManager.currentState.collectAsState()
     val currentMode by connectionManager.currentMode.collectAsState()
     val status by connectionManager.connectionStatus.collectAsState()
+    val statusDetail by connectionManager.statusDetail.collectAsState()
     val latency by connectionManager.latencyMs.collectAsState()
     val packetsSent by connectionManager.totalPacketsSent.collectAsState()
     val packetsPerSec by connectionManager.packetsPerSecond.collectAsState()
@@ -75,6 +83,11 @@ fun PspControllerScreen(
     var showLayoutEditor by remember { mutableStateOf(false) }
     var showLogsDialog by remember { mutableStateOf(false) }
     var showServerGuide by remember { mutableStateOf(false) }
+
+    // La fréquence d'émission configurée est enfin appliquée au gestionnaire de connexion
+    LaunchedEffect(layoutConfig.autoSendRateMs) {
+        connectionManager.updateSendRate(layoutConfig.autoSendRateMs)
+    }
 
     fun triggerFeedback(isRelease: Boolean = false) {
         if (layoutConfig.hapticFeedback) {
@@ -104,210 +117,186 @@ fun PspControllerScreen(
             )
             .testTag("psp_controller_root")
     ) {
-        val totalWidth = maxWidth
-        val totalHeight = maxHeight
+        // ---- Calcul de l'échelle globale d'après la place réellement disponible ----
+        val neededHeight = (44.dp * layoutConfig.triggerScale) +
+            (160.dp * layoutConfig.dpadScale) +
+            (130.dp * layoutConfig.analogScale) +
+            12.dp
+        val widestSide = maxOf(
+            160.dp * layoutConfig.dpadScale,
+            160.dp * layoutConfig.actionScale,
+            130.dp * layoutConfig.analogScale,
+            110.dp * layoutConfig.triggerScale
+        )
+        val neededWidth = widestSide * 2 + 190.dp
 
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Top Status Bar
-            PspStatusBar(
-                currentMode = currentMode,
-                connectionStatus = status,
-                latencyMs = latency,
-                packetsPerSecond = packetsPerSec,
-                totalPackets = packetsSent,
-                testMode = testMode,
-                onToggleTestMode = { connectionManager.setTestMode(it) },
-                onOpenConnectionSheet = { showConnectionSheet = true },
-                onOpenCustomizer = { showLayoutEditor = true },
-                onOpenLogs = { showLogsDialog = true },
-                onOpenServerGuide = { showServerGuide = true },
-                onSwitchMode = onSwitchToModeSelection
-            )
+        val scaleByHeight = maxHeight / neededHeight
+        val scaleByWidth = maxWidth / neededWidth
+        val uiScale = minOf(1f, scaleByHeight, scaleByWidth).coerceIn(0.45f, 1f)
 
-            // Main Play Surface
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        val config = layoutConfig.copy(
+            dpadScale = layoutConfig.dpadScale * uiScale,
+            actionScale = layoutConfig.actionScale * uiScale,
+            analogScale = layoutConfig.analogScale * uiScale,
+            triggerScale = layoutConfig.triggerScale * uiScale,
+            systemBarScale = layoutConfig.systemBarScale * uiScale
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 8.dp, vertical = 2.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // ==========================================
+            // CÔTÉ GAUCHE (gâchette L, croix, stick)
+            // ==========================================
+            Column(
+                modifier = Modifier.fillMaxHeight(),
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // ==========================================
-                // LEFT SIDE (L Trigger, D-Pad, Analog Stick)
-                // ==========================================
-                Column(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .width(180.dp),
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                PspShoulderTrigger(
+                    button = PspButton.L,
+                    isPressed = currentState.isPressed(PspButton.L),
+                    opacity = config.buttonsOpacity,
+                    isLeft = true,
+                    scale = config.triggerScale,
+                    glowIntensity = config.buttonGlowIntensity,
+                    onPressed = { pressed ->
+                        connectionManager.onButtonChanged(PspButton.L, pressed)
+                        triggerFeedback(!pressed)
+                    },
+                    modifier = Modifier.align(Alignment.Start)
+                )
+
+                Box(
+                    modifier = Modifier.offset {
+                        IntOffset(config.dpadOffsetX.toInt(), config.dpadOffsetY.toInt())
+                    }
                 ) {
-                    // L Shoulder Trigger
-                    PspShoulderTrigger(
-                        button = PspButton.L,
-                        isPressed = currentState.isPressed(PspButton.L),
-                        opacity = layoutConfig.buttonsOpacity,
-                        isLeft = true,
-                        scale = layoutConfig.triggerScale,
-                        glowIntensity = layoutConfig.buttonGlowIntensity,
-                        onPressed = { pressed ->
-                            connectionManager.onButtonChanged(PspButton.L, pressed)
-                            triggerFeedback(!pressed)
-                        },
-                        modifier = Modifier.align(Alignment.Start)
-                    )
-
-                    // PSP D-Pad
-                    Box(
-                        modifier = Modifier.offset {
-                            IntOffset(layoutConfig.dpadOffsetX.toInt(), layoutConfig.dpadOffsetY.toInt())
-                        }
-                    ) {
-                        PspDPad(
-                            config = layoutConfig,
-                            activeButtons = currentState.activeButtons,
-                            onButtonChange = { btn, pressed ->
-                                connectionManager.onButtonChanged(btn, pressed)
-                            },
-                            onFeedback = { isRelease -> triggerFeedback(isRelease) }
-                        )
-                    }
-
-                    // PSP Analog Stick
-                    Box(
-                        modifier = Modifier.offset {
-                            IntOffset(layoutConfig.analogOffsetX.toInt(), layoutConfig.analogOffsetY.toInt())
-                        }
-                    ) {
-                        PspAnalogStick(
-                            config = layoutConfig,
-                            onAnalogChange = { ax, ay ->
-                                connectionManager.onAnalogChanged(ax, ay)
-                            }
-                        )
-                    }
-                }
-
-                // ==========================================
-                // CENTER CONSOLE (Branding screen & System bar)
-                // ==========================================
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .padding(horizontal = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Spacer(modifier = Modifier.height(2.dp))
-
-                    // Decorative PSP Screen Display / Monitor Area
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.88f)
-                            .weight(1f)
-                            .padding(vertical = 4.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF07090D))
-                            .border(1.5.dp, Color(0xFF1E2638), RoundedCornerShape(12.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            // Official NEMPSP Logo Badge
-                            NemPspLogoBadge(compact = false)
-
-                            // Telemetry snippet on center screen
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(Color(0xFF10141D))
-                                    .padding(horizontal = 8.dp, vertical = 3.dp)
-                            ) {
-                                Text(
-                                    text = "STICK: (${String.format(java.util.Locale.US, "%+.2f", currentState.analogX)}, ${String.format(java.util.Locale.US, "%+.2f", currentState.analogY)})",
-                                    color = Color(0xFF00E5FF),
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 10.sp
-                                )
-
-                                Text(
-                                    text = "BTNS: ${if (currentState.activeButtons.isEmpty()) "---" else currentState.activeButtons.joinToString("") { it.symbol }}",
-                                    color = Color(0xFF81C784),
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
-
-                    // Bottom PSP System Bar (HOME, SELECT, START, etc.)
-                    PspSystemBar(
+                    PspDPad(
+                        config = config,
                         activeButtons = currentState.activeButtons,
-                        opacity = layoutConfig.buttonsOpacity,
-                        scale = layoutConfig.systemBarScale,
                         onButtonChange = { btn, pressed ->
                             connectionManager.onButtonChanged(btn, pressed)
                         },
-                        onFeedback = { isRelease -> triggerFeedback(isRelease) },
-                        modifier = Modifier.padding(bottom = 6.dp)
+                        onFeedback = { isRelease -> triggerFeedback(isRelease) }
                     )
                 }
 
-                // ==========================================
-                // RIGHT SIDE (R Trigger, Action Buttons △ ○ ✕ □)
-                // ==========================================
-                Column(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .width(180.dp),
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // R Shoulder Trigger
-                    PspShoulderTrigger(
-                        button = PspButton.R,
-                        isPressed = currentState.isPressed(PspButton.R),
-                        opacity = layoutConfig.buttonsOpacity,
-                        isLeft = false,
-                        scale = layoutConfig.triggerScale,
-                        glowIntensity = layoutConfig.buttonGlowIntensity,
-                        onPressed = { pressed ->
-                            connectionManager.onButtonChanged(PspButton.R, pressed)
-                            triggerFeedback(!pressed)
-                        },
-                        modifier = Modifier.align(Alignment.End)
-                    )
-
-                    // PSP Action Buttons (Triangle, Circle, Cross, Square)
-                    Box(
-                        modifier = Modifier.offset {
-                            IntOffset(layoutConfig.actionOffsetX.toInt(), layoutConfig.actionOffsetY.toInt())
-                        }
-                    ) {
-                        PspActionButtons(
-                            config = layoutConfig,
-                            activeButtons = currentState.activeButtons,
-                            onButtonChange = { btn, pressed ->
-                                connectionManager.onButtonChanged(btn, pressed)
-                            },
-                            onFeedback = { isRelease -> triggerFeedback(isRelease) }
-                        )
+                Box(
+                    modifier = Modifier.offset {
+                        IntOffset(config.analogOffsetX.toInt(), config.analogOffsetY.toInt())
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
+                ) {
+                    PspAnalogStick(
+                        config = config,
+                        onAnalogChange = { ax, ay ->
+                            connectionManager.onAnalogChanged(ax, ay)
+                        }
+                    )
                 }
+            }
+
+            // ==========================================
+            // CONSOLE CENTRALE (écran + réglages + barre système)
+            // ==========================================
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(horizontal = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Écran de la console : statut, télémétrie et TOUS les réglages
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(vertical = 3.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF07090D))
+                        .border(1.5.dp, Color(0xFF1E2638), RoundedCornerShape(12.dp))
+                        .testTag("nempsp_console_frame"),
+                    contentAlignment = Alignment.Center
+                ) {
+                    PspConsolePanel(
+                        currentMode = currentMode,
+                        connectionStatus = status,
+                        statusDetail = statusDetail,
+                        gamepadState = currentState,
+                        latencyMs = latency,
+                        packetsPerSecond = packetsPerSec,
+                        totalPackets = packetsSent,
+                        testMode = testMode,
+                        onToggleTestMode = { connectionManager.setTestMode(it) },
+                        onOpenConnectionSheet = { showConnectionSheet = true },
+                        onOpenCustomizer = { showLayoutEditor = true },
+                        onOpenLogs = { showLogsDialog = true },
+                        onOpenServerGuide = { showServerGuide = true },
+                        onSwitchMode = onSwitchToModeSelection
+                    )
+                }
+
+                // Barre système PSP (HOME, VOL, NOTE, SELECT, START)
+                PspSystemBar(
+                    activeButtons = currentState.activeButtons,
+                    opacity = config.buttonsOpacity,
+                    scale = config.systemBarScale,
+                    onButtonChange = { btn, pressed ->
+                        connectionManager.onButtonChanged(btn, pressed)
+                    },
+                    onFeedback = { isRelease -> triggerFeedback(isRelease) },
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+            }
+
+            // ==========================================
+            // CÔTÉ DROIT (gâchette R, touches △ ○ ✕ □)
+            // ==========================================
+            Column(
+                modifier = Modifier.fillMaxHeight(),
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                PspShoulderTrigger(
+                    button = PspButton.R,
+                    isPressed = currentState.isPressed(PspButton.R),
+                    opacity = config.buttonsOpacity,
+                    isLeft = false,
+                    scale = config.triggerScale,
+                    glowIntensity = config.buttonGlowIntensity,
+                    onPressed = { pressed ->
+                        connectionManager.onButtonChanged(PspButton.R, pressed)
+                        triggerFeedback(!pressed)
+                    },
+                    modifier = Modifier.align(Alignment.End)
+                )
+
+                Box(
+                    modifier = Modifier.offset {
+                        IntOffset(config.actionOffsetX.toInt(), config.actionOffsetY.toInt())
+                    }
+                ) {
+                    PspActionButtons(
+                        config = config,
+                        activeButtons = currentState.activeButtons,
+                        onButtonChange = { btn, pressed ->
+                            connectionManager.onButtonChanged(btn, pressed)
+                        },
+                        onFeedback = { isRelease -> triggerFeedback(isRelease) }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
             }
         }
 
         // ==========================================
-        // Modal Dialogs
+        // Fenêtres modales
         // ==========================================
         if (showConnectionSheet) {
             ConnectionSettingsSheet(

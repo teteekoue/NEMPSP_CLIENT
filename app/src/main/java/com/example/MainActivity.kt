@@ -212,6 +212,11 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         soundHelper.release()
+        // Ferme les sockets et le canal d'émission si l'activité se termine vraiment.
+        // (Le récepteur, lui, doit survivre : il tourne dans son propre service de premier plan.)
+        if (isFinishing) {
+            connectionManager.release()
+        }
         // Note: Le service de premier plan du serveur continue de tourner en arrière-plan
         // tant que l'utilisateur n'a pas explicitement cliqué sur "Arrêter" ou sur la notification.
     }

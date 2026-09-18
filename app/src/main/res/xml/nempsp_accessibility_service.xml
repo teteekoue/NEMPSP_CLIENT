@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Configuration du service d'injection NEMPSP.
+
+    - canPerformGestures="true"  : seul attribut vraiment nécessaire, il autorise dispatchGesture().
+    - canRetrieveWindowContent="false" : on ne lit AUCUN contenu d'écran, ce qui limite
+      volontairement la portée du service (et rassure à juste titre l'utilisateur).
+    - flagRetrieveInteractiveWindows : permet de connaître les bornes de la fenêtre PPSSPP,
+      indispensable sur Chromebook où le jeu tourne dans une fenêtre redimensionnable.
+    - Pas de android:packageNames : il faut voir les changements de fenêtre de TOUTES les
+      applications pour savoir quand PPSSPP quitte le premier plan et relâcher les appuis.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowsChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows"
+    android:canPerformGestures="true"
+    android:canRetrieveWindowContent="false"
+    android:description="@string/nempsp_accessibility_description"
+    android:notificationTimeout="50"
+    android:summary="@string/nempsp_accessibility_summary" />

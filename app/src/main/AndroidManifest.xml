@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
     <!-- Bluetooth permissions -->
@@ -48,6 +49,28 @@
             android:name="com.example.nempsp.server.NemPspForegroundServerService"
             android:foregroundServiceType="connectedDevice"
             android:exported="false" />
+
+        <!--
+            Injection des touches dans PPSSPP.
+
+            Android interdit à une application normale d'envoyer des événements clavier/manette à
+            une autre application ; dispatchGesture() d'un service d'accessibilité est la seule API
+            publique capable de produire de vrais appuis dans PPSSPP. Le service est exporté car le
+            système doit pouvoir le lier, mais la permission signature BIND_ACCESSIBILITY_SERVICE
+            rend ce liage impossible pour toute autre application.
+        -->
+        <service
+            android:name="com.example.nempsp.injection.NemPspInjectionService"
+            android:exported="true"
+            android:label="@string/nempsp_accessibility_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/nempsp_accessibility_service" />
+        </service>
 
         <activity
             android:name=".MainActivity"

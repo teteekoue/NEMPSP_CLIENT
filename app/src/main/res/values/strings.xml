@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">NEMPSP</string>
+
+    <!-- Service d'accessibilité : injection des touches dans PPSSPP -->
+    <string name="nempsp_accessibility_label">NEMPSP — Manette pour PPSSPP</string>
+    <string name="nempsp_accessibility_summary">Transforme les touches reçues d\'une manette NEMPSP en appuis tactiles sur les commandes de PPSSPP.</string>
+    <string name="nempsp_accessibility_description">Ce service pose des appuis tactiles à la place de vos doigts sur les commandes tactiles de PPSSPP, afin que la manette NEMPSP envoyée depuis un autre appareil pilote le jeu sans aucune configuration dans PPSSPP.\n\nCe que le service fait : il regarde quelle application est au premier plan (pour n\'injecter que lorsque PPSSPP est visible) et il envoie des gestes tactiles aux positions des boutons.\n\nCe que le service ne fait pas : il ne lit aucun texte ni aucun contenu d\'écran, il ne collecte aucune donnée, il n\'injecte aucun geste quand PPSSPP n\'est pas au premier plan, et vous pouvez le désactiver à tout moment depuis les réglages d\'accessibilité ou depuis l\'écran Récepteur de NEMPSP.</string>
 </resources>
